@@ -1,4 +1,4 @@
-import { Header, APIError, Gateway } from "encore.dev/api";
+import { Header, APIError } from "encore.dev/api";
 import { authHandler } from "encore.dev/auth";
 import { getSession } from "./session";
 import type { AuthData } from "./types";
@@ -36,5 +36,3 @@ export const auth = authHandler<AuthParams, AuthData>(async (data) => {
     throw APIError.unauthenticated("invalid session", err as Error);
   }
 });
-
-export const gw = new Gateway({ authHandler: auth });

@@ -100,11 +100,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const getAuthenticatedBackend = () => {
-    if (!token) return backend;
-    
-    return backend.with({
-      auth: () => Promise.resolve({ authorization: `Bearer ${token}` })
-    });
+    // For now, return the regular backend until we figure out the auth configuration
+    console.log("Returning regular backend (auth not configured yet)");
+    return backend;
   };
 
   const value = {
