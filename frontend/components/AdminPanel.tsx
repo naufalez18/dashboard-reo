@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Monitor, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Monitor, ArrowLeft, Eye, EyeOff, LogOut, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import backend from "~backend/client";
+import { useAuth } from "../contexts/AuthContext";
 import type { Dashboard } from "~backend/dashboard/types";
 import DashboardForm from "./DashboardForm";
 
@@ -14,6 +14,9 @@ export default function AdminPanel() {
   const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user, logout, getAuthenticatedBackend } = useAuth();
+
+  const backend = getAuthenticatedBackend();
 
   const { data: dashboardsData, isLoading } = useQuery({
     queryKey: ["dashboards"],
@@ -134,6 +137,14 @@ export default function AdminPanel() {
     setEditingDashboard(null);
   };
 
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out",
+    });
+  };
+
   if (showForm) {
     return (
       <DashboardForm
@@ -163,10 +174,35 @@ export default function AdminPanel() {
               <p className="text-slate-600">Manage your dashboard rotation</p>
             </div>
           </div>
-          <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Dashboard
-          </Button>
+          <div className="flex items-center space-x-4">
+            {/* User Info */}
+            <div className="flex items-center space-x-3 bg-white rounded-lg px-4 py-2 border border-slate-200 shadow-sm">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                {user?.role === "admin" ? (
+                  <Shield className="w-4 h-4 text-blue-600" />
+                ) : (
+                  <User className="w-4 h-4 text-blue-600" />
+                )}
+              </div>
+              <div className="text-sm">
+                <div className="font-medium text-slate-800">{user?.username}</div>
+                <div className="text-slate-500 capitalize">{user?.role}</div>
+              </div>
+              <Badge variant={user?.role === "admin" ? "destructive" : "secondary"} className="text-xs">
+                {user?.role}
+              </Badge>
+            </div>
+            
+            <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Dashboard
+            </Button>
+            
+            <Button onClick={handleLogout} variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50">
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}

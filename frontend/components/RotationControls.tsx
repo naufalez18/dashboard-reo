@@ -18,6 +18,7 @@ interface RotationControlsProps {
   onReset: () => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
+  userRole?: "admin" | "viewer";
 }
 
 export default function RotationControls({
@@ -33,6 +34,7 @@ export default function RotationControls({
   onReset,
   isFullscreen,
   onToggleFullscreen,
+  userRole,
 }: RotationControlsProps) {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -144,20 +146,22 @@ export default function RotationControls({
           </Button>
         </div>
 
-        {/* Admin Link */}
-        <div className="pt-3 border-t border-slate-200">
-          <Button
-            asChild
-            size="sm"
-            variant="ghost"
-            className="w-full text-slate-600 hover:text-slate-800 hover:bg-slate-50"
-          >
-            <a href="/admin">
-              <Settings className="w-4 h-4 mr-2" />
-              Admin Panel
-            </a>
-          </Button>
-        </div>
+        {/* Admin Link - Only show for admin users */}
+        {userRole === "admin" && (
+          <div className="pt-3 border-t border-slate-200">
+            <Button
+              asChild
+              size="sm"
+              variant="ghost"
+              className="w-full text-slate-600 hover:text-slate-800 hover:bg-slate-50"
+            >
+              <a href="/admin">
+                <Settings className="w-4 h-4 mr-2" />
+                Admin Panel
+              </a>
+            </Button>
+          </div>
+        )}
       </div>
     </Card>
   );

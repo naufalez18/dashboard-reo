@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Play, Pause, Settings, RotateCcw, Lock, Unlock } from "lucide-react";
+import { Play, Pause, Settings, RotateCcw, Lock, Unlock, LogOut, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "../contexts/AuthContext";
 import backend from "~backend/client";
 import type { Dashboard } from "~backend/dashboard/types";
 import DashboardFrame from "./DashboardFrame";
@@ -24,6 +25,7 @@ export default function DashboardRotation() {
   const [showAdminUnlock, setShowAdminUnlock] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { toast } = useToast();
+  const { user, logout } = useAuth();
 
   const { data: dashboardsData, isLoading, error, refetch } = useQuery({
     queryKey: ["active-dashboards"],
@@ -220,6 +222,14 @@ export default function DashboardRotation() {
     });
   }, [toast]);
 
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out",
+    });
+  };
+
   // Monitor fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -352,12 +362,18 @@ export default function DashboardRotation() {
           <p className="text-slate-500 text-sm mb-6">
             Configure and activate dashboards in the admin panel to start rotation
           </p>
-          <Button asChild className="bg-blue-600 hover:bg-blue-700">
-            <a href="/admin">
-              <Settings className="w-4 h-4 mr-2" />
-              Configure Dashboards
-            </a>
-          </Button>
+          {user?.role === "admin" ? (
+            <Button asChild className="bg-blue-600 hover:bg-blue-700">
+              <a href="/admin">
+                <Settings className="w-4 h-4 mr-2" />
+                Configure Dashboards
+              </a>
+            </Button>
+          ) : (
+            <div className="text-slate-500 text-sm">
+              Contact your administrator to configure dashboards
+            </div>
+          )}
         </Card>
       </div>
     );
@@ -386,13 +402,43 @@ export default function DashboardRotation() {
         </div>
       )}
 
-      {/* Kiosk Mode Toggle - Only show when not in kiosk mode */}
+      {/* User Info - Top Left */}
       {!isKioskMode && (
         <div className="absolute top-6 left-6 z-50">
-          <KioskModeToggle
-            isKioskMode={isKioskMode}
-            onToggle={toggleKioskMode}
-          />
+          <div className="flex items-center space-x-3">
+            <KioskModeToggle
+              isKioskMode={isKioskMode}
+              onToggle={toggleKioskMode}
+            />
+            
+            <Card className="bg-white/95 backdrop-blur-sm border-slate-200 p-3 shadow-lg">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  {user?.role === "admin" ? (
+                    <Shield className="w-4 h-4 text-blue-600" />
+                  ) : (
+                    <User className="w-4 h-4 text-blue-600" />
+                  )}
+                </div>
+                <div className="text-sm">
+                  <div className="font-medium text-slate-800">{user?.username}</div>
+                  <div className="text-slate-500 capitalize">{user?.role}</div>
+                </div>
+                <Badge variant={user?.role === "admin" ? "destructive" : "secondary"} className="text-xs">
+                  {user?.role}
+                </Badge>
+                <Button
+                  onClick={handleLogout}
+                  size="sm"
+                  variant="ghost"
+                  className="text-slate-400 hover:text-slate-600 p-1"
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            </Card>
+          </div>
         </div>
       )}
 
@@ -412,6 +458,7 @@ export default function DashboardRotation() {
             onReset={resetRotation}
             isFullscreen={isFullscreen}
             onToggleFullscreen={toggleFullscreen}
+            userRole={user?.role}
           />
         </div>
       )}

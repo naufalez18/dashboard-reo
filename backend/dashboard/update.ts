@@ -1,11 +1,19 @@
 import { api, APIError } from "encore.dev/api";
+import { getAuthData } from "~encore/auth";
 import { dashboardDB } from "./db";
 import type { UpdateDashboardRequest, Dashboard } from "./types";
 
 // Updates an existing dashboard.
 export const update = api<UpdateDashboardRequest, Dashboard>(
-  { expose: true, method: "PUT", path: "/dashboards/:id" },
+  { expose: true, method: "PUT", path: "/dashboards/:id", auth: true },
   async (req) => {
+    const auth = getAuthData()!;
+    
+    // Only admin users can update dashboards
+    if (auth.role !== "admin") {
+      throw APIError.permissionDenied("Insufficient permissions");
+    }
+
     const updates: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import backend from "~backend/client";
+import { useAuth } from "../contexts/AuthContext";
 import type { Dashboard, CreateDashboardRequest, UpdateDashboardRequest } from "~backend/dashboard/types";
 
 interface DashboardFormProps {
@@ -25,6 +25,8 @@ export default function DashboardForm({ dashboard, onClose }: DashboardFormProps
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { getAuthenticatedBackend } = useAuth();
+  const backend = getAuthenticatedBackend();
   const isEditing = !!dashboard;
 
   const createMutation = useMutation({

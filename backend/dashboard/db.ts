@@ -1,5 +1,3 @@
-import { SQLDatabase } from "encore.dev/storage/sqldb";
+import dashboardDB from "../external_dbs/dashboard/db";
 
-export const dashboardDB = new SQLDatabase("dashboard", {
-  migrations: "./migrations",
-});
+export { dashboardDB };
