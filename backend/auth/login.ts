@@ -1,7 +1,7 @@
 import { api, APIError } from "encore.dev/api";
 import bcrypt from "bcryptjs";
 import { authDB } from "./db";
-import { createJWT } from "./jwt";
+import { createSession } from "./session";
 import type { LoginRequest, LoginResponse, User } from "./types";
 
 export const login = api<LoginRequest, LoginResponse>(
@@ -38,14 +38,8 @@ export const login = api<LoginRequest, LoginResponse>(
       role: row.role,
     };
 
-    const token = createJWT({
-      sub: row.id,
-      username: row.username,
-      role: row.role,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60,
-    });
+    const sessionId = createSession(row.id, row.username, row.role);
 
-    return { token, user };
+    return { token: sessionId, user };
   }
 );

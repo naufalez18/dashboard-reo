@@ -1,5 +1,5 @@
 import { api, APIError } from "encore.dev/api";
-import { verifyJWT } from "./jwt";
+import { getSession } from "./session";
 import type { User } from "./types";
 
 interface VerifyTokenRequest {
@@ -14,18 +14,22 @@ export const verifyToken = api<VerifyTokenRequest, VerifyTokenResponse>(
   { expose: true, method: "POST", path: "/auth/verify" },
   async (req) => {
     try {
-      const decoded = verifyJWT(req.token);
+      const session = getSession(req.token);
+      
+      if (!session) {
+        throw APIError.unauthenticated("Invalid or expired session");
+      }
 
       return {
         user: {
-          id: decoded.sub,
-          username: decoded.username,
-          role: decoded.role,
+          id: session.userId,
+          username: session.username,
+          role: session.role as "admin" | "viewer",
         },
       };
     } catch (error) {
-      console.error("Token verification failed:", error);
-      throw APIError.unauthenticated("Invalid or expired token");
+      console.error("Session verification failed:", error);
+      throw APIError.unauthenticated("Invalid or expired session");
     }
   }
 );

@@ -1,6 +1,6 @@
 import { Header, APIError, Gateway } from "encore.dev/api";
 import { authHandler } from "encore.dev/auth";
-import { verifyJWT } from "./jwt";
+import { getSession } from "./session";
 import type { AuthData } from "./types";
 
 interface AuthParams {
@@ -14,14 +14,17 @@ export const auth = authHandler<AuthParams, AuthData>(async (data) => {
   }
 
   try {
-    const decoded = verifyJWT(token);
+    const session = getSession(token);
+    if (!session) {
+      throw APIError.unauthenticated("invalid or expired session");
+    }
     return {
-      userID: String(decoded.sub),
-      username: decoded.username,
-      role: decoded.role,
+      userID: String(session.userId),
+      username: session.username,
+      role: session.role as "admin" | "viewer",
     };
   } catch (err) {
-    throw APIError.unauthenticated("invalid token", err as Error);
+    throw APIError.unauthenticated("invalid session", err as Error);
   }
 });
 
