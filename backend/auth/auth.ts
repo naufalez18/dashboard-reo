@@ -16,7 +16,7 @@ export const auth = authHandler<AuthParams, AuthData>(async (data) => {
   }
 
   try {
-    const session = getSession(token);
+    const session = await getSession(token);
     console.log("Session lookup result:", session ? "found" : "not found");
     
     if (!session) {

@@ -7,6 +7,8 @@ import type { LoginRequest, LoginResponse, User } from "./types";
 export const login = api<LoginRequest, LoginResponse>(
   { expose: true, method: "POST", path: "/auth/login" },
   async (req) => {
+    console.log(`Login attempt for username: ${req.username}`);
+    
     const username = req.username?.trim();
     const password = req.password?.trim();
 
@@ -24,11 +26,13 @@ export const login = api<LoginRequest, LoginResponse>(
     }`;
 
     if (!row) {
+      console.log(`Login failed: user ${username} not found`);
       throw APIError.unauthenticated("Invalid username or password");
     }
 
     const match = await bcrypt.compare(password, row.password_hash);
     if (!match) {
+      console.log(`Login failed: invalid password for user ${username}`);
       throw APIError.unauthenticated("Invalid username or password");
     }
 
@@ -38,7 +42,8 @@ export const login = api<LoginRequest, LoginResponse>(
       role: row.role,
     };
 
-    const sessionId = createSession(row.id, row.username, row.role);
+    const sessionId = await createSession(row.id, row.username, row.role);
+    console.log(`Login successful for user ${username}, session created: ${sessionId.substring(0, 8)}...`);
 
     return { token: sessionId, user };
   }

@@ -1,46 +1,61 @@
 import crypto from "crypto";
+import { authDB } from "./db";
 
-// Simple in-memory session store
-const sessions = new Map<string, { userId: number; username: string; role: string; expiresAt: number }>();
-
-export function createSession(userId: number, username: string, role: string): string {
+export async function createSession(userId: number, username: string, role: string): Promise<string> {
   const sessionId = crypto.randomBytes(32).toString('hex');
-  const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+  const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000)); // 24 hours
   
-  sessions.set(sessionId, {
-    userId,
-    username,
-    role,
-    expiresAt
-  });
+  await authDB.exec`
+    INSERT INTO sessions (id, user_id, username, role, expires_at)
+    VALUES (${sessionId}, ${userId}, ${username}, ${role}, ${expiresAt})
+  `;
+  
+  console.log(`Created session ${sessionId} for user ${username} (${userId}), expires at ${expiresAt}`);
   
   return sessionId;
 }
 
-export function getSession(sessionId: string) {
-  const session = sessions.get(sessionId);
+export async function getSession(sessionId: string) {
+  console.log(`Looking up session: ${sessionId}`);
+  
+  const session = await authDB.queryRow<{
+    user_id: number;
+    username: string;
+    role: string;
+    expires_at: Date;
+  }>`
+    SELECT user_id, username, role, expires_at
+    FROM sessions 
+    WHERE id = ${sessionId} AND expires_at > NOW()
+  `;
+  
   if (!session) {
+    console.log(`Session ${sessionId} not found or expired`);
+    // Clean up expired session if it exists
+    await authDB.exec`DELETE FROM sessions WHERE id = ${sessionId}`;
     return null;
   }
   
-  if (Date.now() > session.expiresAt) {
-    sessions.delete(sessionId);
-    return null;
-  }
-  
-  return session;
+  console.log(`Session ${sessionId} is valid for user ${session.username} (${session.user_id})`);
+  return {
+    userId: session.user_id,
+    username: session.username,
+    role: session.role,
+    expiresAt: session.expires_at.getTime()
+  };
 }
 
-export function removeSession(sessionId: string) {
-  sessions.delete(sessionId);
+export async function removeSession(sessionId: string) {
+  await authDB.exec`DELETE FROM sessions WHERE id = ${sessionId}`;
+  console.log(`Removed session ${sessionId}`);
 }
 
-export function cleanExpiredSessions() {
-  const now = Date.now();
-  for (const [sessionId, session] of sessions.entries()) {
-    if (now > session.expiresAt) {
-      sessions.delete(sessionId);
-    }
+export async function cleanExpiredSessions() {
+  try {
+    await authDB.exec`DELETE FROM sessions WHERE expires_at <= NOW()`;
+    console.log("Cleaned expired sessions");
+  } catch (error) {
+    console.error("Error cleaning expired sessions:", error);
   }
 }
 

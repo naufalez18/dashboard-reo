@@ -13,13 +13,17 @@ interface VerifyTokenResponse {
 export const verifyToken = api<VerifyTokenRequest, VerifyTokenResponse>(
   { expose: true, method: "POST", path: "/auth/verify" },
   async (req) => {
+    console.log(`Verify token called with token: ${req.token.substring(0, 8)}...`);
+    
     try {
-      const session = getSession(req.token);
+      const session = await getSession(req.token);
       
       if (!session) {
+        console.log("Session verification failed: session not found or expired");
         throw APIError.unauthenticated("Invalid or expired session");
       }
 
+      console.log(`Session verification successful for user: ${session.username}`);
       return {
         user: {
           id: session.userId,
@@ -28,7 +32,7 @@ export const verifyToken = api<VerifyTokenRequest, VerifyTokenResponse>(
         },
       };
     } catch (error) {
-      console.error("Session verification failed:", error);
+      console.error("Session verification failed with error:", error);
       throw APIError.unauthenticated("Invalid or expired session");
     }
   }
