@@ -7,7 +7,11 @@ import type { CreateDashboardRequest, Dashboard } from "./types";
 export const create = api<CreateDashboardRequest, Dashboard>(
   { expose: true, method: "POST", path: "/dashboards", auth: true },
   async (req) => {
-    const auth = getAuthData()!;
+    const auth = getAuthData();
+    
+    if (!auth) {
+      throw APIError.unauthenticated("Authentication required");
+    }
     
     // Only admin users can create dashboards
     if (auth.role !== "admin") {

@@ -7,7 +7,11 @@ import type { UpdateDashboardRequest, Dashboard } from "./types";
 export const update = api<UpdateDashboardRequest, Dashboard>(
   { expose: true, method: "PUT", path: "/dashboards/:id", auth: true },
   async (req) => {
-    const auth = getAuthData()!;
+    const auth = getAuthData();
+    
+    if (!auth) {
+      throw APIError.unauthenticated("Authentication required");
+    }
     
     // Only admin users can update dashboards
     if (auth.role !== "admin") {

@@ -6,7 +6,11 @@ import { dashboardDB } from "./db";
 export const deleteDashboard = api<{ id: number }, void>(
   { expose: true, method: "DELETE", path: "/dashboards/:id", auth: true },
   async (req) => {
-    const auth = getAuthData()!;
+    const auth = getAuthData();
+    
+    if (!auth) {
+      throw APIError.unauthenticated("Authentication required");
+    }
     
     // Only admin users can delete dashboards
     if (auth.role !== "admin") {
