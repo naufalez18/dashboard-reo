@@ -9,7 +9,7 @@ export const create = api<CreateDashboardRequest, Dashboard>(
   async (req) => {
     console.log("Create dashboard endpoint called");
     
-    // TODO: Re-enable authentication once auth is working
+    // TODO: Re-enable authentication once frontend auth configuration is working
     // const auth = getAuthData();
     // console.log("Auth data from getAuthData():", auth);
     

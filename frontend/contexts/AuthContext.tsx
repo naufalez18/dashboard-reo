@@ -92,7 +92,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    if (token) {
+      try {
+        // Call backend logout to invalidate session
+        await backend.auth.logout({ token });
+        console.log("Backend logout successful");
+      } catch (error) {
+        console.error("Backend logout failed:", error);
+        // Continue with frontend logout even if backend fails
+      }
+    }
+    
     setToken(null);
     setUser(null);
     localStorage.removeItem("auth_token");
@@ -100,8 +111,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const getAuthenticatedBackend = () => {
-    // For now, return the regular backend until we figure out the auth configuration
-    console.log("Returning regular backend (auth not configured yet)");
+    if (!token) {
+      return backend;
+    }
+    
+    // TODO: Configure proper authentication headers once Encore client supports it
     return backend;
   };
 
