@@ -1,6 +1,6 @@
 import { api, APIError } from "encore.dev/api";
 import { secret } from "encore.dev/config";
-import * as jwt from "jsonwebtoken";
+import { sign } from "jsonwebtoken";
 import type { LoginRequest, LoginResponse, User } from "./types";
 
 const jwtSecret = secret("JWTSecret");
@@ -48,7 +48,7 @@ export const login = api<LoginRequest, LoginResponse>(
     };
 
     // Generate JWT token
-    const token = jwt.sign(
+    const token = sign(
       {
         sub: username,
         username,

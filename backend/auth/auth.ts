@@ -1,7 +1,7 @@
 import { Header, APIError, Gateway } from "encore.dev/api";
 import { authHandler } from "encore.dev/auth";
 import { secret } from "encore.dev/config";
-import * as jwt from "jsonwebtoken";
+import { verify } from "jsonwebtoken";
 import type { AuthData } from "./types";
 
 const jwtSecret = secret("JWTSecret");
@@ -18,7 +18,7 @@ const auth = authHandler<AuthParams, AuthData>(
     }
 
     try {
-      const decoded = jwt.verify(token, jwtSecret()) as any;
+      const decoded = verify(token, jwtSecret()) as any;
       
       return {
         userID: decoded.sub,
