@@ -28,6 +28,7 @@ export const verifyToken = api<VerifyTokenRequest, VerifyTokenResponse>(
         },
       };
     } catch (error) {
+      console.error("Token verification failed:", error);
       throw APIError.unauthenticated("Invalid or expired token");
     }
   }

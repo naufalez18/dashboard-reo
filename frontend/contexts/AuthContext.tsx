@@ -46,7 +46,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           .then((response) => {
             setUser(response.user);
           })
-          .catch(() => {
+          .catch((error) => {
+            console.error("Token verification failed:", error);
             // Token is invalid, clear storage
             localStorage.removeItem("auth_token");
             localStorage.removeItem("auth_user");
@@ -57,6 +58,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setIsLoading(false);
           });
       } catch (error) {
+        console.error("Error parsing stored auth data:", error);
         // Invalid stored data, clear it
         localStorage.removeItem("auth_token");
         localStorage.removeItem("auth_user");
@@ -69,7 +71,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (username: string, password: string) => {
     try {
-      const response = await backend.auth.login({ username, password });
+      console.log("Attempting login with:", { username, passwordLength: password.length });
+      
+      const response = await backend.auth.login({ 
+        username: username.trim(), 
+        password: password.trim() 
+      });
+      
+      console.log("Login response received:", { user: response.user });
       
       setToken(response.token);
       setUser(response.user);
@@ -78,6 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       localStorage.setItem("auth_token", response.token);
       localStorage.setItem("auth_user", JSON.stringify(response.user));
     } catch (error) {
+      console.error("Login failed:", error);
       throw error;
     }
   };

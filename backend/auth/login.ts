@@ -17,11 +17,28 @@ export const login = api<LoginRequest, LoginResponse>(
   async (req) => {
     const { username, password } = req;
 
+    // Debug logging to help identify the issue
+    console.log("Login attempt:", { username, passwordLength: password?.length });
+    console.log("Available users:", Object.keys(users));
+
+    // Validate input
+    if (!username || !password) {
+      throw APIError.invalidArgument("Username and password are required");
+    }
+
     // Check if user exists and password matches
-    const user = users[username];
-    if (!user || user.password !== password) {
+    const user = users[username.trim()];
+    if (!user) {
+      console.log("User not found:", username);
       throw APIError.unauthenticated("Invalid username or password");
     }
+
+    if (user.password !== password.trim()) {
+      console.log("Password mismatch for user:", username);
+      throw APIError.unauthenticated("Invalid username or password");
+    }
+
+    console.log("Login successful for user:", username);
 
     // Create user object
     const userObj: User = {

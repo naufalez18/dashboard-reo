@@ -40,16 +40,25 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(username, password);
+      await login(username.trim(), password.trim());
       toast({
         title: "Login Successful",
         description: "Welcome to Dashboard Rotation System",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
+      
+      // Extract error message from the error object
+      let errorMessage = "Invalid username or password";
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.error) {
+        errorMessage = error.error;
+      }
+      
       toast({
         title: "Login Failed",
-        description: "Invalid username or password",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
