@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Play, Pause, Settings, RotateCcw } from "lucide-react";
+import { Play, Pause, Settings, RotateCcw, Lock, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,8 @@ import backend from "~backend/client";
 import type { Dashboard } from "~backend/dashboard/types";
 import DashboardFrame from "./DashboardFrame";
 import RotationControls from "./RotationControls";
+import KioskModeToggle from "./KioskModeToggle";
+import AdminUnlock from "./AdminUnlock";
 
 export default function DashboardRotation() {
   const [isRotating, setIsRotating] = useState(false);
@@ -18,6 +20,8 @@ export default function DashboardRotation() {
   const [rotationInterval, setRotationInterval] = useState<NodeJS.Timeout | null>(null);
   const [countdownInterval, setCountdownInterval] = useState<NodeJS.Timeout | null>(null);
   const [showControls, setShowControls] = useState(true);
+  const [isKioskMode, setIsKioskMode] = useState(false);
+  const [showAdminUnlock, setShowAdminUnlock] = useState(false);
   const { toast } = useToast();
 
   const { data: dashboardsData, isLoading, error, refetch } = useQuery({
@@ -129,11 +133,110 @@ export default function DashboardRotation() {
     }
   }, [dashboards, currentIndex, isRotating, clearIntervals]);
 
+  const previousDashboard = useCallback(() => {
+    if (dashboards.length === 0) return;
+    
+    const newIndex = currentIndex === 0 ? dashboards.length - 1 : currentIndex - 1;
+    setCurrentIndex(newIndex);
+    setNextIndex((newIndex + 1) % dashboards.length);
+    
+    if (isRotating) {
+      clearIntervals();
+      const currentDashboard = dashboards[newIndex];
+      const duration = currentDashboard?.displayDuration || 30;
+      setTimeRemaining(duration);
+
+      // Restart countdown
+      const countdown = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      setCountdownInterval(countdown);
+
+      // Restart rotation
+      const rotation = setInterval(() => {
+        setCurrentIndex((prevIndex) => {
+          const nextIdx = (prevIndex + 1) % dashboards.length;
+          setNextIndex((nextIdx + 1) % dashboards.length);
+          const nextDashboard = dashboards[nextIdx];
+          setTimeRemaining(nextDashboard?.displayDuration || 30);
+          return nextIdx;
+        });
+      }, duration * 1000);
+      setRotationInterval(rotation);
+    }
+  }, [dashboards, currentIndex, isRotating, clearIntervals]);
+
   const resetRotation = useCallback(() => {
     stopRotation();
     setCurrentIndex(0);
     setNextIndex(dashboards.length > 1 ? 1 : 0);
   }, [stopRotation, dashboards.length]);
+
+  const toggleKioskMode = useCallback(() => {
+    setIsKioskMode(prev => !prev);
+    if (!isKioskMode) {
+      setShowControls(false);
+    } else {
+      setShowControls(true);
+    }
+  }, [isKioskMode]);
+
+  const handleAdminUnlock = useCallback(() => {
+    setIsKioskMode(false);
+    setShowControls(true);
+    setShowAdminUnlock(false);
+    toast({
+      title: "Kiosk Mode Disabled",
+      description: "Admin controls are now available",
+    });
+  }, [toast]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Prevent default behavior for our shortcuts
+      if (['Space', 'ArrowLeft', 'ArrowRight', 'KeyR', 'KeyK'].includes(event.code)) {
+        event.preventDefault();
+      }
+
+      switch (event.code) {
+        case 'Space':
+          if (isRotating) {
+            stopRotation();
+          } else {
+            startRotation();
+          }
+          break;
+        case 'ArrowRight':
+          nextDashboard();
+          break;
+        case 'ArrowLeft':
+          previousDashboard();
+          break;
+        case 'KeyR':
+          resetRotation();
+          break;
+        case 'KeyK':
+          if (!isKioskMode) {
+            toggleKioskMode();
+          }
+          break;
+        case 'Escape':
+          if (isKioskMode) {
+            setShowAdminUnlock(true);
+          }
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isRotating, startRotation, stopRotation, nextDashboard, previousDashboard, resetRotation, toggleKioskMode, isKioskMode]);
 
   // Update next index when dashboards change
   useEffect(() => {
@@ -142,29 +245,31 @@ export default function DashboardRotation() {
     }
   }, [dashboards.length, currentIndex]);
 
-  // Auto-hide controls after 10 seconds of inactivity when rotating
+  // Auto-hide controls after 10 seconds of inactivity when rotating (but not in kiosk mode)
   useEffect(() => {
-    if (isRotating) {
+    if (isRotating && !isKioskMode) {
       const timer = setTimeout(() => {
         setShowControls(false);
       }, 10000);
       return () => clearTimeout(timer);
-    } else {
+    } else if (!isKioskMode) {
       setShowControls(true);
     }
-  }, [isRotating, showControls]);
+  }, [isRotating, showControls, isKioskMode]);
 
-  // Show controls on mouse movement
+  // Show controls on mouse movement (but not in kiosk mode)
   useEffect(() => {
     const handleMouseMove = () => {
-      setShowControls(true);
+      if (!isKioskMode) {
+        setShowControls(true);
+      }
     };
 
-    if (isRotating) {
+    if (isRotating && !isKioskMode) {
       document.addEventListener('mousemove', handleMouseMove);
       return () => document.removeEventListener('mousemove', handleMouseMove);
     }
-  }, [isRotating]);
+  }, [isRotating, isKioskMode]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -242,8 +347,18 @@ export default function DashboardRotation() {
         </div>
       )}
 
-      {/* Control Panel - Only show when controls are visible */}
-      {showControls && (
+      {/* Kiosk Mode Toggle - Only show when not in kiosk mode */}
+      {!isKioskMode && (
+        <div className="absolute top-4 left-4 z-50">
+          <KioskModeToggle
+            isKioskMode={isKioskMode}
+            onToggle={toggleKioskMode}
+          />
+        </div>
+      )}
+
+      {/* Control Panel - Only show when controls are visible and not in kiosk mode */}
+      {showControls && !isKioskMode && (
         <div className="absolute top-4 right-4 z-50 transition-opacity duration-300">
           <RotationControls
             isRotating={isRotating}
@@ -260,8 +375,8 @@ export default function DashboardRotation() {
         </div>
       )}
 
-      {/* Minimal Status Indicator - Only show when rotating and controls are hidden */}
-      {isRotating && !showControls && (
+      {/* Minimal Status Indicator - Only show when rotating and controls are hidden or in kiosk mode */}
+      {isRotating && (!showControls || isKioskMode) && (
         <div className="absolute top-4 left-4 z-50">
           <div className="bg-black/60 backdrop-blur-sm rounded-full px-3 py-1 flex items-center space-x-2">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -275,8 +390,30 @@ export default function DashboardRotation() {
         </div>
       )}
 
-      {/* Click anywhere to show controls when hidden */}
-      {!showControls && (
+      {/* Keyboard Shortcuts Hint - Only show when not in kiosk mode and not rotating */}
+      {!isKioskMode && !isRotating && showControls && (
+        <div className="absolute bottom-4 left-4 z-50">
+          <Card className="bg-black/80 backdrop-blur-sm border-gray-700 p-3">
+            <div className="text-xs text-gray-300 space-y-1">
+              <div><kbd className="bg-gray-700 px-1 rounded text-white">Space</kbd> Play/Pause</div>
+              <div><kbd className="bg-gray-700 px-1 rounded text-white">←→</kbd> Navigate</div>
+              <div><kbd className="bg-gray-700 px-1 rounded text-white">R</kbd> Reset</div>
+              <div><kbd className="bg-gray-700 px-1 rounded text-white">K</kbd> Kiosk Mode</div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Admin Unlock Modal */}
+      {showAdminUnlock && (
+        <AdminUnlock
+          onUnlock={handleAdminUnlock}
+          onCancel={() => setShowAdminUnlock(false)}
+        />
+      )}
+
+      {/* Click anywhere to show controls when hidden (but not in kiosk mode) */}
+      {!showControls && !isKioskMode && (
         <div 
           className="absolute inset-0 z-40 cursor-pointer"
           onClick={() => setShowControls(true)}
