@@ -38,7 +38,7 @@ export default function RotationControls({
         onClick={() => setIsVisible(true)}
         size="sm"
         variant="outline"
-        className="bg-black/80 backdrop-blur-sm border-gray-600 text-white hover:bg-gray-800"
+        className="bg-white/95 backdrop-blur-sm border-slate-200 text-slate-700 hover:bg-slate-50 shadow-lg"
       >
         <Eye className="w-4 h-4" />
       </Button>
@@ -46,34 +46,34 @@ export default function RotationControls({
   }
 
   return (
-    <Card className="bg-black/90 backdrop-blur-sm border-gray-700 p-4 min-w-80">
+    <Card className="bg-white/95 backdrop-blur-sm border-slate-200 p-4 min-w-80 shadow-xl">
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h3 className="text-white font-semibold">Dashboard Rotation</h3>
+          <h3 className="text-slate-800 font-semibold">Dashboard Rotation</h3>
           <Button
             onClick={() => setIsVisible(false)}
             size="sm"
             variant="ghost"
-            className="text-gray-400 hover:text-white"
+            className="text-slate-400 hover:text-slate-600"
           >
             <EyeOff className="w-4 h-4" />
           </Button>
         </div>
 
         {/* Current Dashboard Info */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-gray-300 text-sm">Current:</span>
-            <Badge variant="outline" className="text-white border-gray-500">
+            <span className="text-slate-600 text-sm font-medium">Current:</span>
+            <Badge variant="outline" className="text-slate-700 border-slate-300 bg-slate-50">
               {currentIndex + 1} / {totalDashboards}
             </Badge>
           </div>
-          <div className="text-white font-medium truncate">
+          <div className="text-slate-800 font-semibold truncate">
             {currentDashboard?.name}
           </div>
           {nextDashboard && (
-            <div className="text-gray-400 text-sm">
+            <div className="text-slate-500 text-sm">
               Next: {nextDashboard.name}
             </div>
           )}
@@ -81,11 +81,11 @@ export default function RotationControls({
 
         {/* Timer */}
         {isRotating && (
-          <div className="text-center">
-            <div className="text-2xl font-mono text-white mb-1">
+          <div className="text-center bg-slate-50 rounded-lg p-3">
+            <div className="text-2xl font-mono text-slate-800 mb-1">
               {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
             </div>
-            <div className="text-gray-400 text-xs">Time remaining</div>
+            <div className="text-slate-500 text-xs font-medium">Time remaining</div>
           </div>
         )}
 
@@ -94,7 +94,7 @@ export default function RotationControls({
           <Button
             onClick={isRotating ? onStop : onStart}
             size="sm"
-            className={isRotating ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
+            className={isRotating ? "bg-red-600 hover:bg-red-700" : "bg-emerald-600 hover:bg-emerald-700"}
           >
             {isRotating ? (
               <>
@@ -113,7 +113,7 @@ export default function RotationControls({
             onClick={onNext}
             size="sm"
             variant="outline"
-            className="border-gray-600 text-white hover:bg-gray-800"
+            className="border-slate-300 text-slate-700 hover:bg-slate-50"
           >
             <SkipForward className="w-4 h-4 mr-2" />
             Next
@@ -123,19 +123,19 @@ export default function RotationControls({
             onClick={onReset}
             size="sm"
             variant="outline"
-            className="border-gray-600 text-white hover:bg-gray-800"
+            className="border-slate-300 text-slate-700 hover:bg-slate-50"
           >
             <RotateCcw className="w-4 h-4" />
           </Button>
         </div>
 
         {/* Admin Link */}
-        <div className="pt-2 border-t border-gray-700">
+        <div className="pt-3 border-t border-slate-200">
           <Button
             asChild
             size="sm"
             variant="ghost"
-            className="w-full text-gray-400 hover:text-white"
+            className="w-full text-slate-600 hover:text-slate-800 hover:bg-slate-50"
           >
             <a href="/admin">
               <Settings className="w-4 h-4 mr-2" />

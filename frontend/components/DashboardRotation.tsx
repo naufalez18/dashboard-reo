@@ -280,10 +280,10 @@ export default function DashboardRotation() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-lg text-white">Loading dashboards...</div>
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-lg text-slate-700 font-medium">Loading dashboards...</div>
         </div>
       </div>
     );
@@ -291,11 +291,11 @@ export default function DashboardRotation() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-        <Card className="p-6 max-w-md bg-gray-900 border-gray-700">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <Card className="p-6 max-w-md bg-white shadow-xl border-0">
           <div className="text-center">
-            <div className="text-red-400 mb-4 text-lg">Failed to load dashboards</div>
-            <Button onClick={() => refetch()} variant="outline" className="border-gray-600 text-white hover:bg-gray-800">
+            <div className="text-red-600 mb-4 text-lg font-semibold">Failed to load dashboards</div>
+            <Button onClick={() => refetch()} className="bg-blue-600 hover:bg-blue-700">
               <RotateCcw className="w-4 h-4 mr-2" />
               Retry
             </Button>
@@ -307,10 +307,10 @@ export default function DashboardRotation() {
 
   if (dashboards.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-        <Card className="p-8 max-w-md text-center bg-gray-900 border-gray-700">
-          <div className="text-gray-300 mb-4">No active dashboards configured</div>
-          <p className="text-gray-500 text-sm mb-6">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <Card className="p-8 max-w-md text-center bg-white shadow-xl border-0">
+          <div className="text-slate-700 mb-4 text-lg font-semibold">No active dashboards configured</div>
+          <p className="text-slate-500 text-sm mb-6">
             Configure and activate dashboards in the admin panel to start rotation
           </p>
           <Button asChild className="bg-blue-600 hover:bg-blue-700">
@@ -328,7 +328,7 @@ export default function DashboardRotation() {
   const nextDashboardItem = dashboards[nextIndex];
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden">
+    <div className="fixed inset-0 bg-white overflow-hidden">
       {/* Main Dashboard Display - Full screen without any obstruction */}
       <div className="absolute inset-0">
         <DashboardFrame
@@ -349,7 +349,7 @@ export default function DashboardRotation() {
 
       {/* Kiosk Mode Toggle - Only show when not in kiosk mode */}
       {!isKioskMode && (
-        <div className="absolute top-4 left-4 z-50">
+        <div className="absolute top-6 left-6 z-50">
           <KioskModeToggle
             isKioskMode={isKioskMode}
             onToggle={toggleKioskMode}
@@ -359,7 +359,7 @@ export default function DashboardRotation() {
 
       {/* Control Panel - Only show when controls are visible and not in kiosk mode */}
       {showControls && !isKioskMode && (
-        <div className="absolute top-4 right-4 z-50 transition-opacity duration-300">
+        <div className="absolute top-6 right-6 z-50 transition-opacity duration-300">
           <RotationControls
             isRotating={isRotating}
             timeRemaining={timeRemaining}
@@ -377,13 +377,13 @@ export default function DashboardRotation() {
 
       {/* Minimal Status Indicator - Only show when rotating and controls are hidden or in kiosk mode */}
       {isRotating && (!showControls || isKioskMode) && (
-        <div className="absolute top-4 left-4 z-50">
-          <div className="bg-black/60 backdrop-blur-sm rounded-full px-3 py-1 flex items-center space-x-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-white text-sm font-medium">
+        <div className="absolute top-6 left-6 z-50">
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center space-x-3 shadow-lg border border-slate-200">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+            <span className="text-slate-700 text-sm font-semibold">
               {currentIndex + 1}/{dashboards.length}
             </span>
-            <span className="text-gray-300 text-sm">
+            <span className="text-slate-500 text-sm">
               {timeRemaining}s
             </span>
           </div>
@@ -392,13 +392,14 @@ export default function DashboardRotation() {
 
       {/* Keyboard Shortcuts Hint - Only show when not in kiosk mode and not rotating */}
       {!isKioskMode && !isRotating && showControls && (
-        <div className="absolute bottom-4 left-4 z-50">
-          <Card className="bg-black/80 backdrop-blur-sm border-gray-700 p-3">
-            <div className="text-xs text-gray-300 space-y-1">
-              <div><kbd className="bg-gray-700 px-1 rounded text-white">Space</kbd> Play/Pause</div>
-              <div><kbd className="bg-gray-700 px-1 rounded text-white">←→</kbd> Navigate</div>
-              <div><kbd className="bg-gray-700 px-1 rounded text-white">R</kbd> Reset</div>
-              <div><kbd className="bg-gray-700 px-1 rounded text-white">K</kbd> Kiosk Mode</div>
+        <div className="absolute bottom-6 left-6 z-50">
+          <Card className="bg-white/95 backdrop-blur-sm border-slate-200 p-4 shadow-lg">
+            <div className="text-xs text-slate-600 space-y-2">
+              <div className="font-medium text-slate-700 mb-2">Keyboard Shortcuts</div>
+              <div><kbd className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono text-xs">Space</kbd> Play/Pause</div>
+              <div><kbd className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono text-xs">←→</kbd> Navigate</div>
+              <div><kbd className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono text-xs">R</kbd> Reset</div>
+              <div><kbd className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono text-xs">K</kbd> Kiosk Mode</div>
             </div>
           </Card>
         </div>

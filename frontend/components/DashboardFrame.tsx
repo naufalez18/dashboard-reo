@@ -32,14 +32,14 @@ export default function DashboardFrame({ dashboard, isActive }: DashboardFramePr
 
   if (hasError) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-900">
-        <Card className="p-8 max-w-md text-center bg-red-50 border-red-200">
+      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <Card className="p-8 max-w-md text-center bg-white shadow-xl border-0">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-red-800 mb-2">
+          <h3 className="text-lg font-semibold text-red-700 mb-2">
             Failed to Load Dashboard
           </h3>
-          <p className="text-red-600 mb-4">{dashboard.name}</p>
-          <p className="text-sm text-red-500">
+          <p className="text-red-600 mb-4 font-medium">{dashboard.name}</p>
+          <p className="text-sm text-slate-500">
             Please check the URL and try again
           </p>
         </Card>
@@ -50,10 +50,10 @@ export default function DashboardFrame({ dashboard, isActive }: DashboardFramePr
   return (
     <div className="w-full h-full relative">
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 z-10">
           <div className="text-center">
-            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-white text-lg">Loading {dashboard.name}...</p>
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-slate-700 text-lg font-medium">Loading {dashboard.name}...</p>
           </div>
         </div>
       )}

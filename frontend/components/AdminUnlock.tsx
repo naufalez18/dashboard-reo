@@ -46,19 +46,19 @@ export default function AdminUnlock({ onUnlock, onCancel }: AdminUnlockProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
-      <Card className="bg-gray-900 border-gray-700 w-full max-w-md mx-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+      <Card className="bg-white border-slate-200 w-full max-w-md mx-4 shadow-2xl">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-white flex items-center">
-              <Lock className="w-5 h-5 mr-2" />
+            <CardTitle className="text-slate-800 flex items-center">
+              <Lock className="w-5 h-5 mr-2 text-blue-600" />
               Admin Unlock Required
             </CardTitle>
             <Button
               onClick={onCancel}
               size="sm"
               variant="ghost"
-              className="text-gray-400 hover:text-white"
+              className="text-slate-400 hover:text-slate-600"
             >
               <X className="w-4 h-4" />
             </Button>
@@ -67,7 +67,7 @@ export default function AdminUnlock({ onUnlock, onCancel }: AdminUnlockProps) {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="unlock-code" className="text-gray-300">
+              <Label htmlFor="unlock-code" className="text-slate-700">
                 Enter unlock code to exit kiosk mode:
               </Label>
               <Input
@@ -81,11 +81,11 @@ export default function AdminUnlock({ onUnlock, onCancel }: AdminUnlockProps) {
                 }}
                 onKeyDown={handleKeyDown}
                 placeholder="Enter unlock code"
-                className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+                className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                 autoComplete="off"
               />
               {error && (
-                <p className="text-red-400 text-sm">{error}</p>
+                <p className="text-red-600 text-sm">{error}</p>
               )}
             </div>
 
@@ -101,13 +101,13 @@ export default function AdminUnlock({ onUnlock, onCancel }: AdminUnlockProps) {
                 type="button"
                 onClick={onCancel}
                 variant="outline"
-                className="border-gray-600 text-white hover:bg-gray-800"
+                className="border-slate-300 text-slate-700 hover:bg-slate-50"
               >
                 Cancel
               </Button>
             </div>
 
-            <div className="text-xs text-gray-500 text-center">
+            <div className="text-xs text-slate-500 text-center bg-slate-50 p-2 rounded">
               Default code: admin123
             </div>
           </form>

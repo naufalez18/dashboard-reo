@@ -147,23 +147,23 @@ export default function AdminPanel() {
   const inactiveDashboards = dashboards.filter(d => !d.isActive);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50">
               <a href="/">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Rotation
               </a>
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard Admin</h1>
-              <p className="text-gray-600">Manage your dashboard rotation</p>
+              <h1 className="text-3xl font-bold text-slate-900">Dashboard Admin</h1>
+              <p className="text-slate-600">Manage your dashboard rotation</p>
             </div>
           </div>
-          <Button onClick={() => setShowForm(true)}>
+          <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2" />
             Add Dashboard
           </Button>
@@ -171,55 +171,57 @@ export default function AdminPanel() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="bg-white shadow-sm border-slate-200">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Monitor className="w-8 h-8 text-blue-500 mr-3" />
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-4">
+                  <Monitor className="w-6 h-6 text-blue-600" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Dashboards</p>
-                  <p className="text-2xl font-bold text-gray-900">{dashboards.length}</p>
+                  <p className="text-sm font-medium text-slate-600">Total Dashboards</p>
+                  <p className="text-2xl font-bold text-slate-900">{dashboards.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-white shadow-sm border-slate-200">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                  <Eye className="w-4 h-4 text-green-600" />
+                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mr-4">
+                  <Eye className="w-6 h-6 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Active</p>
-                  <p className="text-2xl font-bold text-gray-900">{activeDashboards.length}</p>
+                  <p className="text-sm font-medium text-slate-600">Active</p>
+                  <p className="text-2xl font-bold text-slate-900">{activeDashboards.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-white shadow-sm border-slate-200">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
-                  <EyeOff className="w-4 h-4 text-gray-500" />
+                <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mr-4">
+                  <EyeOff className="w-6 h-6 text-slate-500" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Inactive</p>
-                  <p className="text-2xl font-bold text-gray-900">{inactiveDashboards.length}</p>
+                  <p className="text-sm font-medium text-slate-600">Inactive</p>
+                  <p className="text-2xl font-bold text-slate-900">{inactiveDashboards.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white shadow-sm border-slate-200">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mr-4">
+                  <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Avg Duration</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-slate-600">Avg Duration</p>
+                  <p className="text-2xl font-bold text-slate-900">
                     {activeDashboards.length > 0 
                       ? Math.round(activeDashboards.reduce((sum, d) => sum + d.displayDuration, 0) / activeDashboards.length)
                       : 0}s
@@ -251,12 +253,12 @@ export default function AdminPanel() {
         )}
 
         {/* Dashboard List */}
-        <Card>
+        <Card className="bg-white shadow-sm border-slate-200">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center justify-between text-slate-900">
               <span>Dashboards</span>
               {dashboards.length > 0 && (
-                <Badge variant="outline">
+                <Badge variant="outline" className="border-slate-300 text-slate-700">
                   {activeDashboards.length} active of {dashboards.length} total
                 </Badge>
               )}
@@ -265,14 +267,14 @@ export default function AdminPanel() {
           <CardContent>
             {isLoading ? (
               <div className="text-center py-8">
-                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <div className="text-gray-600">Loading dashboards...</div>
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <div className="text-slate-600">Loading dashboards...</div>
               </div>
             ) : dashboards.length === 0 ? (
               <div className="text-center py-8">
-                <Monitor className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">No dashboards configured</p>
-                <Button onClick={() => setShowForm(true)}>
+                <Monitor className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                <p className="text-slate-600 mb-4">No dashboards configured</p>
+                <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Your First Dashboard
                 </Button>
@@ -282,24 +284,28 @@ export default function AdminPanel() {
                 {dashboards.map((dashboard, index) => (
                   <div
                     key={dashboard.id}
-                    className={`flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors ${
+                    className={`flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors ${
                       !dashboard.isActive ? 'opacity-60' : ''
                     }`}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="font-semibold text-gray-900 truncate">{dashboard.name}</h3>
-                        <Badge variant={dashboard.isActive ? "default" : "secondary"}>
+                        <h3 className="font-semibold text-slate-900 truncate">{dashboard.name}</h3>
+                        <Badge variant={dashboard.isActive ? "default" : "secondary"} className={
+                          dashboard.isActive 
+                            ? "bg-emerald-100 text-emerald-800 border-emerald-200" 
+                            : "bg-slate-100 text-slate-600 border-slate-200"
+                        }>
                           {dashboard.isActive ? "Active" : "Inactive"}
                         </Badge>
-                        <Badge variant="outline">
+                        <Badge variant="outline" className="border-slate-300 text-slate-700">
                           {dashboard.displayDuration}s
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs border-slate-300 text-slate-600">
                           #{dashboard.sortOrder}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600 truncate max-w-2xl">
+                      <p className="text-sm text-slate-600 truncate max-w-2xl">
                         {dashboard.url}
                       </p>
                     </div>
@@ -310,6 +316,7 @@ export default function AdminPanel() {
                         disabled={index === 0}
                         size="sm"
                         variant="outline"
+                        className="border-slate-300 text-slate-700 hover:bg-slate-50"
                         title="Move up"
                       >
                         <ArrowUp className="w-4 h-4" />
@@ -320,6 +327,7 @@ export default function AdminPanel() {
                         disabled={index === dashboards.length - 1}
                         size="sm"
                         variant="outline"
+                        className="border-slate-300 text-slate-700 hover:bg-slate-50"
                         title="Move down"
                       >
                         <ArrowDown className="w-4 h-4" />
@@ -329,6 +337,10 @@ export default function AdminPanel() {
                         onClick={() => handleToggleActive(dashboard)}
                         size="sm"
                         variant={dashboard.isActive ? "secondary" : "default"}
+                        className={dashboard.isActive 
+                          ? "bg-slate-100 text-slate-600 hover:bg-slate-200" 
+                          : "bg-emerald-600 text-white hover:bg-emerald-700"
+                        }
                         title={dashboard.isActive ? "Deactivate" : "Activate"}
                       >
                         {dashboard.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -338,6 +350,7 @@ export default function AdminPanel() {
                         onClick={() => handleEdit(dashboard)}
                         size="sm"
                         variant="outline"
+                        className="border-slate-300 text-slate-700 hover:bg-slate-50"
                         title="Edit"
                       >
                         <Edit className="w-4 h-4" />
@@ -347,7 +360,7 @@ export default function AdminPanel() {
                         onClick={() => handleDelete(dashboard.id)}
                         size="sm"
                         variant="outline"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                         title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />

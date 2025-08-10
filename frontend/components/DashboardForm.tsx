@@ -113,60 +113,62 @@ export default function DashboardForm({ dashboard, onClose }: DashboardFormProps
   const isLoading = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center space-x-4 mb-8">
-          <Button onClick={onClose} variant="outline">
+          <Button onClick={onClose} variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-slate-900">
               {isEditing ? "Edit Dashboard" : "Add Dashboard"}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-slate-600">
               {isEditing ? "Update dashboard settings" : "Configure a new dashboard for rotation"}
             </p>
           </div>
         </div>
 
         {/* Form */}
-        <Card>
+        <Card className="bg-white shadow-sm border-slate-200">
           <CardHeader>
-            <CardTitle>Dashboard Details</CardTitle>
+            <CardTitle className="text-slate-900">Dashboard Details</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="name">Dashboard Name</Label>
+                <Label htmlFor="name" className="text-slate-700">Dashboard Name</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => handleChange("name", e.target.value)}
                   placeholder="e.g., Sales Dashboard"
+                  className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="url">Dashboard URL</Label>
+                <Label htmlFor="url" className="text-slate-700">Dashboard URL</Label>
                 <Textarea
                   id="url"
                   value={formData.url}
                   onChange={(e) => handleChange("url", e.target.value)}
                   placeholder="https://app.powerbi.com/view?r=..."
                   rows={3}
+                  className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-slate-600">
                   Enter the full URL of your Power BI dashboard or any other iframe-compatible URL
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="displayDuration">Display Duration (seconds)</Label>
+                  <Label htmlFor="displayDuration" className="text-slate-700">Display Duration (seconds)</Label>
                   <Input
                     id="displayDuration"
                     type="number"
@@ -174,32 +176,34 @@ export default function DashboardForm({ dashboard, onClose }: DashboardFormProps
                     max="3600"
                     value={formData.displayDuration}
                     onChange={(e) => handleChange("displayDuration", parseInt(e.target.value) || 30)}
+                    className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                   />
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-slate-600">
                     How long to display this dashboard (10-3600 seconds)
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="sortOrder">Sort Order</Label>
+                  <Label htmlFor="sortOrder" className="text-slate-700">Sort Order</Label>
                   <Input
                     id="sortOrder"
                     type="number"
                     min="0"
                     value={formData.sortOrder}
                     onChange={(e) => handleChange("sortOrder", parseInt(e.target.value) || 0)}
+                    className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                   />
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-slate-600">
                     Lower numbers appear first in rotation
                   </p>
                 </div>
               </div>
 
               <div className="flex justify-end space-x-4 pt-6">
-                <Button type="button" variant="outline" onClick={onClose}>
+                <Button type="button" variant="outline" onClick={onClose} className="border-slate-300 text-slate-700 hover:bg-slate-50">
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" disabled={isLoading} className="bg-blue-600 hover:bg-blue-700">
                   <Save className="w-4 h-4 mr-2" />
                   {isLoading ? "Saving..." : isEditing ? "Update Dashboard" : "Create Dashboard"}
                 </Button>
@@ -209,13 +213,13 @@ export default function DashboardForm({ dashboard, onClose }: DashboardFormProps
         </Card>
 
         {/* Tips */}
-        <Card className="mt-6">
+        <Card className="mt-6 bg-white shadow-sm border-slate-200">
           <CardHeader>
-            <CardTitle>Tips for Power BI Integration</CardTitle>
+            <CardTitle className="text-slate-900">Tips for Power BI Integration</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="text-sm text-gray-600">
-              <p className="font-medium mb-2">For Power BI dashboards:</p>
+            <div className="text-sm text-slate-600">
+              <p className="font-medium mb-2 text-slate-700">For Power BI dashboards:</p>
               <ul className="list-disc list-inside space-y-1">
                 <li>Use the "Publish to web" feature to get a public URL</li>
                 <li>Or use the embed URL from your Power BI workspace</li>
@@ -224,8 +228,8 @@ export default function DashboardForm({ dashboard, onClose }: DashboardFormProps
               </ul>
             </div>
             
-            <div className="text-sm text-gray-600">
-              <p className="font-medium mb-2">For other dashboards:</p>
+            <div className="text-sm text-slate-600">
+              <p className="font-medium mb-2 text-slate-700">For other dashboards:</p>
               <ul className="list-disc list-inside space-y-1">
                 <li>Any URL that can be embedded in an iframe will work</li>
                 <li>Ensure the target site allows iframe embedding</li>
