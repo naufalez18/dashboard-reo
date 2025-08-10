@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Monitor, ArrowLeft } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Monitor, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +38,7 @@ export default function AdminPanel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dashboards"] });
+      queryClient.invalidateQueries({ queryKey: ["active-dashboards"] });
       toast({
         title: "Success",
         description: "Dashboard deleted successfully",
@@ -64,6 +65,7 @@ export default function AdminPanel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dashboards"] });
+      queryClient.invalidateQueries({ queryKey: ["active-dashboards"] });
       toast({
         title: "Success",
         description: "Dashboard updated successfully",
@@ -141,6 +143,9 @@ export default function AdminPanel() {
     );
   }
 
+  const activeDashboards = dashboards.filter(d => d.isActive);
+  const inactiveDashboards = dashboards.filter(d => !d.isActive);
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
@@ -165,7 +170,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -182,13 +187,11 @@ export default function AdminPanel() {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <Eye className="w-4 h-4 text-green-600" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-600">Active</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {dashboards.filter(d => d.isActive).length}
-                  </p>
+                  <p className="text-2xl font-bold text-gray-900">{activeDashboards.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -198,12 +201,28 @@ export default function AdminPanel() {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
-                  <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+                  <EyeOff className="w-4 h-4 text-gray-500" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-600">Inactive</p>
+                  <p className="text-2xl font-bold text-gray-900">{inactiveDashboards.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Avg Duration</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {dashboards.filter(d => !d.isActive).length}
+                    {activeDashboards.length > 0 
+                      ? Math.round(activeDashboards.reduce((sum, d) => sum + d.displayDuration, 0) / activeDashboards.length)
+                      : 0}s
                   </p>
                 </div>
               </div>
@@ -211,14 +230,42 @@ export default function AdminPanel() {
           </Card>
         </div>
 
+        {/* Sample Data Notice */}
+        {dashboards.length > 10 && (
+          <Card className="mb-6 bg-blue-50 border-blue-200">
+            <CardContent className="p-4">
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                  <Monitor className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-blue-800">Sample Power BI Dashboards Loaded</p>
+                  <p className="text-xs text-blue-600">
+                    {dashboards.length} sample dashboards have been added for demonstration. 
+                    Replace the URLs with your actual Power BI dashboard links.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Dashboard List */}
         <Card>
           <CardHeader>
-            <CardTitle>Dashboards</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              <span>Dashboards</span>
+              {dashboards.length > 0 && (
+                <Badge variant="outline">
+                  {activeDashboards.length} active of {dashboards.length} total
+                </Badge>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="text-center py-8">
+                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                 <div className="text-gray-600">Loading dashboards...</div>
               </div>
             ) : dashboards.length === 0 ? (
@@ -235,29 +282,35 @@ export default function AdminPanel() {
                 {dashboards.map((dashboard, index) => (
                   <div
                     key={dashboard.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                    className={`flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors ${
+                      !dashboard.isActive ? 'opacity-60' : ''
+                    }`}
                   >
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="font-semibold text-gray-900">{dashboard.name}</h3>
+                        <h3 className="font-semibold text-gray-900 truncate">{dashboard.name}</h3>
                         <Badge variant={dashboard.isActive ? "default" : "secondary"}>
                           {dashboard.isActive ? "Active" : "Inactive"}
                         </Badge>
                         <Badge variant="outline">
                           {dashboard.displayDuration}s
                         </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          #{dashboard.sortOrder}
+                        </Badge>
                       </div>
-                      <p className="text-sm text-gray-600 truncate max-w-md">
+                      <p className="text-sm text-gray-600 truncate max-w-2xl">
                         {dashboard.url}
                       </p>
                     </div>
                     
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 ml-4">
                       <Button
                         onClick={() => handleMoveUp(dashboard, index)}
                         disabled={index === 0}
                         size="sm"
                         variant="outline"
+                        title="Move up"
                       >
                         <ArrowUp className="w-4 h-4" />
                       </Button>
@@ -267,6 +320,7 @@ export default function AdminPanel() {
                         disabled={index === dashboards.length - 1}
                         size="sm"
                         variant="outline"
+                        title="Move down"
                       >
                         <ArrowDown className="w-4 h-4" />
                       </Button>
@@ -275,14 +329,16 @@ export default function AdminPanel() {
                         onClick={() => handleToggleActive(dashboard)}
                         size="sm"
                         variant={dashboard.isActive ? "secondary" : "default"}
+                        title={dashboard.isActive ? "Deactivate" : "Activate"}
                       >
-                        {dashboard.isActive ? "Deactivate" : "Activate"}
+                        {dashboard.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </Button>
                       
                       <Button
                         onClick={() => handleEdit(dashboard)}
                         size="sm"
                         variant="outline"
+                        title="Edit"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -292,6 +348,7 @@ export default function AdminPanel() {
                         size="sm"
                         variant="outline"
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

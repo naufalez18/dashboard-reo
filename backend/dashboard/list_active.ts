@@ -2,9 +2,9 @@ import { api } from "encore.dev/api";
 import { dashboardDB } from "./db";
 import type { DashboardsResponse, Dashboard } from "./types";
 
-// Retrieves all dashboards ordered by sort order (includes both active and inactive).
-export const list = api<void, DashboardsResponse>(
-  { expose: true, method: "GET", path: "/dashboards" },
+// Retrieves only active dashboards ordered by sort order for rotation.
+export const listActive = api<void, DashboardsResponse>(
+  { expose: true, method: "GET", path: "/dashboards/active" },
   async () => {
     const rows = await dashboardDB.queryAll<{
       id: number;
@@ -18,6 +18,7 @@ export const list = api<void, DashboardsResponse>(
     }>`
       SELECT id, name, url, display_duration, is_active, sort_order, created_at, updated_at
       FROM dashboards
+      WHERE is_active = true
       ORDER BY sort_order ASC, created_at ASC
     `;
 

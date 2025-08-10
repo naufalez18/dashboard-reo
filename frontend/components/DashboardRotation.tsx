@@ -20,12 +20,12 @@ export default function DashboardRotation() {
   const { toast } = useToast();
 
   const { data: dashboardsData, isLoading, error, refetch } = useQuery({
-    queryKey: ["dashboards"],
+    queryKey: ["active-dashboards"],
     queryFn: async () => {
       try {
-        return await backend.dashboard.list();
+        return await backend.dashboard.listActive();
       } catch (err) {
-        console.error("Failed to fetch dashboards:", err);
+        console.error("Failed to fetch active dashboards:", err);
         throw err;
       }
     },
@@ -48,8 +48,8 @@ export default function DashboardRotation() {
   const startRotation = useCallback(() => {
     if (dashboards.length === 0) {
       toast({
-        title: "No Dashboards",
-        description: "Please add dashboards to start rotation.",
+        title: "No Active Dashboards",
+        description: "Please activate dashboards to start rotation.",
         variant: "destructive",
       });
       return;
@@ -150,19 +150,22 @@ export default function DashboardRotation() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg text-gray-600">Loading dashboards...</div>
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-lg text-white">Loading dashboards...</div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="p-6 max-w-md">
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <Card className="p-6 max-w-md bg-gray-900 border-gray-700">
           <div className="text-center">
-            <div className="text-red-600 mb-2">Failed to load dashboards</div>
-            <Button onClick={() => refetch()} variant="outline">
+            <div className="text-red-400 mb-4 text-lg">Failed to load dashboards</div>
+            <Button onClick={() => refetch()} variant="outline" className="border-gray-600 text-white hover:bg-gray-800">
               <RotateCcw className="w-4 h-4 mr-2" />
               Retry
             </Button>
@@ -174,10 +177,13 @@ export default function DashboardRotation() {
 
   if (dashboards.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="p-8 max-w-md text-center">
-          <div className="text-gray-600 mb-4">No dashboards configured</div>
-          <Button asChild>
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <Card className="p-8 max-w-md text-center bg-gray-900 border-gray-700">
+          <div className="text-gray-300 mb-4">No active dashboards configured</div>
+          <p className="text-gray-500 text-sm mb-6">
+            Configure and activate dashboards in the admin panel to start rotation
+          </p>
+          <Button asChild className="bg-blue-600 hover:bg-blue-700">
             <a href="/admin">
               <Settings className="w-4 h-4 mr-2" />
               Configure Dashboards
@@ -238,7 +244,7 @@ export default function DashboardRotation() {
               <span className="text-sm">
                 {currentIndex + 1} of {dashboards.length}
               </span>
-              <span className="text-sm font-medium">
+              <span className="text-sm font-medium truncate max-w-xs">
                 {currentDashboard?.name}
               </span>
             </div>
