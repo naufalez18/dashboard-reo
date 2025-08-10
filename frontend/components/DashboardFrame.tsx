@@ -61,15 +61,19 @@ export default function DashboardFrame({ dashboard, isActive }: DashboardFramePr
       <iframe
         key={key}
         src={dashboard.url}
-        className="w-full h-full border-0"
+        className="w-full h-full border-0 block"
         title={dashboard.name}
         onLoad={handleLoad}
         onError={handleError}
         sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
         style={{
           opacity: isActive ? 1 : 0,
-          transition: isActive ? 'opacity 0.5s ease-in-out' : 'none'
+          transition: isActive ? 'opacity 0.5s ease-in-out' : 'none',
+          display: 'block',
+          margin: 0,
+          padding: 0
         }}
+        allowFullScreen
       />
     </div>
   );

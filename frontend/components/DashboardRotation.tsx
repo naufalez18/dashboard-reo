@@ -17,6 +17,7 @@ export default function DashboardRotation() {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [rotationInterval, setRotationInterval] = useState<NodeJS.Timeout | null>(null);
   const [countdownInterval, setCountdownInterval] = useState<NodeJS.Timeout | null>(null);
+  const [showControls, setShowControls] = useState(true);
   const { toast } = useToast();
 
   const { data: dashboardsData, isLoading, error, refetch } = useQuery({
@@ -141,6 +142,30 @@ export default function DashboardRotation() {
     }
   }, [dashboards.length, currentIndex]);
 
+  // Auto-hide controls after 10 seconds of inactivity when rotating
+  useEffect(() => {
+    if (isRotating) {
+      const timer = setTimeout(() => {
+        setShowControls(false);
+      }, 10000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowControls(true);
+    }
+  }, [isRotating, showControls]);
+
+  // Show controls on mouse movement
+  useEffect(() => {
+    const handleMouseMove = () => {
+      setShowControls(true);
+    };
+
+    if (isRotating) {
+      document.addEventListener('mousemove', handleMouseMove);
+      return () => document.removeEventListener('mousemove', handleMouseMove);
+    }
+  }, [isRotating]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -198,8 +223,8 @@ export default function DashboardRotation() {
   const nextDashboardItem = dashboards[nextIndex];
 
   return (
-    <div className="min-h-screen bg-black relative">
-      {/* Main Dashboard Display */}
+    <div className="fixed inset-0 bg-black overflow-hidden">
+      {/* Main Dashboard Display - Full screen without any obstruction */}
       <div className="absolute inset-0">
         <DashboardFrame
           dashboard={currentDashboard}
@@ -217,49 +242,46 @@ export default function DashboardRotation() {
         </div>
       )}
 
-      {/* Control Panel */}
-      <div className="absolute top-4 right-4 z-50">
-        <RotationControls
-          isRotating={isRotating}
-          timeRemaining={timeRemaining}
-          currentDashboard={currentDashboard}
-          nextDashboard={nextDashboardItem}
-          totalDashboards={dashboards.length}
-          currentIndex={currentIndex}
-          onStart={startRotation}
-          onStop={stopRotation}
-          onNext={nextDashboard}
-          onReset={resetRotation}
-        />
-      </div>
+      {/* Control Panel - Only show when controls are visible */}
+      {showControls && (
+        <div className="absolute top-4 right-4 z-50 transition-opacity duration-300">
+          <RotationControls
+            isRotating={isRotating}
+            timeRemaining={timeRemaining}
+            currentDashboard={currentDashboard}
+            nextDashboard={nextDashboardItem}
+            totalDashboards={dashboards.length}
+            currentIndex={currentIndex}
+            onStart={startRotation}
+            onStop={stopRotation}
+            onNext={nextDashboard}
+            onReset={resetRotation}
+          />
+        </div>
+      )}
 
-      {/* Status Bar */}
-      <div className="absolute bottom-4 left-4 right-4 z-50">
-        <Card className="bg-black/80 backdrop-blur-sm border-gray-700">
-          <div className="p-3 flex items-center justify-between text-white">
-            <div className="flex items-center space-x-4">
-              <Badge variant={isRotating ? "default" : "secondary"}>
-                {isRotating ? "ROTATING" : "PAUSED"}
-              </Badge>
-              <span className="text-sm">
-                {currentIndex + 1} of {dashboards.length}
-              </span>
-              <span className="text-sm font-medium truncate max-w-xs">
-                {currentDashboard?.name}
-              </span>
-            </div>
-            
-            {isRotating && (
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-300">Next in:</span>
-                <Badge variant="outline" className="text-white border-gray-500">
-                  {timeRemaining}s
-                </Badge>
-              </div>
-            )}
+      {/* Minimal Status Indicator - Only show when rotating and controls are hidden */}
+      {isRotating && !showControls && (
+        <div className="absolute top-4 left-4 z-50">
+          <div className="bg-black/60 backdrop-blur-sm rounded-full px-3 py-1 flex items-center space-x-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-white text-sm font-medium">
+              {currentIndex + 1}/{dashboards.length}
+            </span>
+            <span className="text-gray-300 text-sm">
+              {timeRemaining}s
+            </span>
           </div>
-        </Card>
-      </div>
+        </div>
+      )}
+
+      {/* Click anywhere to show controls when hidden */}
+      {!showControls && (
+        <div 
+          className="absolute inset-0 z-40 cursor-pointer"
+          onClick={() => setShowControls(true)}
+        />
+      )}
     </div>
   );
 }
