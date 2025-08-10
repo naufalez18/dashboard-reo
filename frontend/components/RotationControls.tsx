@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Play, Pause, SkipForward, RotateCcw, Settings, Eye, EyeOff } from "lucide-react";
+import { Play, Pause, SkipForward, RotateCcw, Settings, Eye, EyeOff, Maximize, Minimize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,8 @@ interface RotationControlsProps {
   onStop: () => void;
   onNext: () => void;
   onReset: () => void;
+  isFullscreen: boolean;
+  onToggleFullscreen: () => void;
 }
 
 export default function RotationControls({
@@ -29,6 +31,8 @@ export default function RotationControls({
   onStop,
   onNext,
   onReset,
+  isFullscreen,
+  onToggleFullscreen,
 }: RotationControlsProps) {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -51,14 +55,25 @@ export default function RotationControls({
         {/* Header */}
         <div className="flex items-center justify-between">
           <h3 className="text-slate-800 font-semibold">Dashboard Rotation</h3>
-          <Button
-            onClick={() => setIsVisible(false)}
-            size="sm"
-            variant="ghost"
-            className="text-slate-400 hover:text-slate-600"
-          >
-            <EyeOff className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button
+              onClick={onToggleFullscreen}
+              size="sm"
+              variant="ghost"
+              className="text-slate-400 hover:text-slate-600"
+              title={isFullscreen ? "Exit Fullscreen (F11)" : "Enter Fullscreen (F11)"}
+            >
+              {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+            </Button>
+            <Button
+              onClick={() => setIsVisible(false)}
+              size="sm"
+              variant="ghost"
+              className="text-slate-400 hover:text-slate-600"
+            >
+              <EyeOff className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Current Dashboard Info */}

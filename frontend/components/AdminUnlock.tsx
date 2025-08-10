@@ -108,7 +108,8 @@ export default function AdminUnlock({ onUnlock, onCancel }: AdminUnlockProps) {
             </div>
 
             <div className="text-xs text-slate-500 text-center bg-slate-50 p-2 rounded">
-              Default code: admin123
+              <div className="mb-1">Default code: admin123</div>
+              <div className="text-slate-400">Press <kbd className="bg-slate-200 px-1 rounded">Esc</kbd> to exit kiosk mode</div>
             </div>
           </form>
         </CardContent>

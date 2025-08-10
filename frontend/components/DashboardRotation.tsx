@@ -22,6 +22,7 @@ export default function DashboardRotation() {
   const [showControls, setShowControls] = useState(true);
   const [isKioskMode, setIsKioskMode] = useState(false);
   const [showAdminUnlock, setShowAdminUnlock] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const { toast } = useToast();
 
   const { data: dashboardsData, isLoading, error, refetch } = useQuery({
@@ -186,6 +187,29 @@ export default function DashboardRotation() {
     }
   }, [isKioskMode]);
 
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+        toast({
+          title: "Fullscreen Mode",
+          description: "Press F11 or Escape to exit fullscreen",
+        });
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (error) {
+      console.error("Fullscreen error:", error);
+      toast({
+        title: "Fullscreen Error",
+        description: "Unable to toggle fullscreen mode",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
   const handleAdminUnlock = useCallback(() => {
     setIsKioskMode(false);
     setShowControls(true);
@@ -196,11 +220,21 @@ export default function DashboardRotation() {
     });
   }, [toast]);
 
+  // Monitor fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Prevent default behavior for our shortcuts
-      if (['Space', 'ArrowLeft', 'ArrowRight', 'KeyR', 'KeyK'].includes(event.code)) {
+      if (['Space', 'ArrowLeft', 'ArrowRight', 'KeyR', 'KeyK', 'F11', 'Escape'].includes(event.code)) {
         event.preventDefault();
       }
 
@@ -226,9 +260,14 @@ export default function DashboardRotation() {
             toggleKioskMode();
           }
           break;
+        case 'F11':
+          toggleFullscreen();
+          break;
         case 'Escape':
           if (isKioskMode) {
             setShowAdminUnlock(true);
+          } else if (document.fullscreenElement) {
+            document.exitFullscreen();
           }
           break;
       }
@@ -236,7 +275,7 @@ export default function DashboardRotation() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isRotating, startRotation, stopRotation, nextDashboard, previousDashboard, resetRotation, toggleKioskMode, isKioskMode]);
+  }, [isRotating, startRotation, stopRotation, nextDashboard, previousDashboard, resetRotation, toggleKioskMode, toggleFullscreen, isKioskMode]);
 
   // Update next index when dashboards change
   useEffect(() => {
@@ -371,6 +410,8 @@ export default function DashboardRotation() {
             onStop={stopRotation}
             onNext={nextDashboard}
             onReset={resetRotation}
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={toggleFullscreen}
           />
         </div>
       )}
@@ -400,6 +441,8 @@ export default function DashboardRotation() {
               <div><kbd className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono text-xs">←→</kbd> Navigate</div>
               <div><kbd className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono text-xs">R</kbd> Reset</div>
               <div><kbd className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono text-xs">K</kbd> Kiosk Mode</div>
+              <div><kbd className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono text-xs">F11</kbd> Fullscreen</div>
+              <div><kbd className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono text-xs">Esc</kbd> Exit Kiosk/Fullscreen</div>
             </div>
           </Card>
         </div>
