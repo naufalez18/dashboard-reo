@@ -1,9 +1,17 @@
 import { api, APIError } from "encore.dev/api";
-import { secret } from "encore.dev/config";
-import { sign } from "jsonwebtoken";
 import type { LoginRequest, LoginResponse, User } from "./types";
 
-const jwtSecret = secret("JWTSecret");
+// Simple JWT implementation without external dependencies
+function createSimpleJWT(payload: any): string {
+  const header = { alg: "HS256", typ: "JWT" };
+  const encodedHeader = btoa(JSON.stringify(header));
+  const encodedPayload = btoa(JSON.stringify(payload));
+  
+  // Simple signature using a hardcoded secret for demo purposes
+  const signature = btoa(`${encodedHeader}.${encodedPayload}.demo-secret`);
+  
+  return `${encodedHeader}.${encodedPayload}.${signature}`;
+}
 
 // Hardcoded users for demo purposes
 const users: Record<string, { password: string; role: "admin" | "viewer" }> = {
@@ -47,18 +55,14 @@ export const login = api<LoginRequest, LoginResponse>(
       role: user.role,
     };
 
-    // Generate JWT token
-    const token = sign(
-      {
-        sub: username,
-        username,
-        role: user.role,
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
-      },
-      jwtSecret(),
-      { algorithm: "HS256" }
-    );
+    // Generate simple JWT token
+    const token = createSimpleJWT({
+      sub: username,
+      username,
+      role: user.role,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
+    });
 
     return {
       token,

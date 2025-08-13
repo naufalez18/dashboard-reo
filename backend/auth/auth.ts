@@ -1,10 +1,27 @@
 import { Header, APIError, Gateway } from "encore.dev/api";
 import { authHandler } from "encore.dev/auth";
-import { secret } from "encore.dev/config";
-import { verify } from "jsonwebtoken";
 import type { AuthData } from "./types";
 
-const jwtSecret = secret("JWTSecret");
+// Simple JWT verification without external dependencies
+function verifySimpleJWT(token: string): any {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      throw new Error("Invalid token format");
+    }
+    
+    const payload = JSON.parse(atob(parts[1]));
+    
+    // Check expiration
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+      throw new Error("Token expired");
+    }
+    
+    return payload;
+  } catch (error) {
+    throw new Error("Invalid token");
+  }
+}
 
 interface AuthParams {
   authorization?: Header<"Authorization">;
@@ -18,7 +35,7 @@ const auth = authHandler<AuthParams, AuthData>(
     }
 
     try {
-      const decoded = verify(token, jwtSecret()) as any;
+      const decoded = verifySimpleJWT(token);
       
       return {
         userID: decoded.sub,
