@@ -1,4 +1,4 @@
-import { api } from "encore.dev/api";
+import { api, APIError } from "encore.dev/api";
 import { getAuthData } from "~encore/auth";
 import { dashboardDB } from "./db";
 import type { CreateDashboardRequest, Dashboard } from "./types";
@@ -11,7 +11,7 @@ export const create = api<CreateDashboardRequest, Dashboard>(
     
     // Only admin users can create dashboards
     if (auth.role !== "admin") {
-      throw new Error("Insufficient permissions");
+      throw APIError.permissionDenied("Insufficient permissions");
     }
 
     const row = await dashboardDB.queryRow<{
@@ -30,7 +30,7 @@ export const create = api<CreateDashboardRequest, Dashboard>(
     `;
 
     if (!row) {
-      throw new Error("Failed to create dashboard");
+      throw APIError.internal("Failed to create dashboard");
     }
 
     return {
