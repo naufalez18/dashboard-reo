@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "../contexts/AuthContext";
-import backend from "~backend/client";
+//import backend from "~backend/client";
 import type { Dashboard } from "~backend/dashboard/types";
 import DashboardFrame from "./DashboardFrame";
 import RotationControls from "./RotationControls";
@@ -27,17 +27,21 @@ export default function DashboardRotation() {
   const { toast } = useToast();
   const { user, logout } = useAuth();
 
+export default function DashboardRotation() {
+  const { getAuthenticatedBackend, logout, user } = useAuth();
+  const api = getAuthenticatedBackend();
+
   const { data: dashboardsData, isLoading, error, refetch } = useQuery({
     queryKey: ["active-dashboards"],
     queryFn: async () => {
       try {
-        return await backend.dashboard.listActive();
+        return await api.dashboard.listActive();
       } catch (err) {
         console.error("Failed to fetch active dashboards:", err);
         throw err;
       }
     },
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    refetchInterval: 5 * 60 * 1000,
   });
 
   const dashboards = dashboardsData?.dashboards || [];
