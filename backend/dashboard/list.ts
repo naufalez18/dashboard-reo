@@ -1,5 +1,4 @@
-import { APIError } from "encore.dev/api";
-import { gw } from "../auth/auth";
+import { api, APIError } from "encore.dev/api";
 import { dashboardDB } from "./db";
 
 type Row = {
@@ -13,19 +12,10 @@ type Row = {
   updated_at: Date;
 };
 
-export const list = gw.api<void, { dashboards: any[] }>(
-  { method: "GET", path: "/dashboards" },
-  async (_req, ctx) => {
+export const list = api<void, { dashboards: any[] }>(
+  { method: "GET", path: "/dashboards", expose: true },
+  async (_req, _ctx) => {
     try {
-      // Guard auth
-      const user = (ctx as any)?.auth;
-      if (!user?.userID) throw APIError.unauthenticated("Unauthenticated");
-
-      // (opsional) validasi env DB
-      if (!process.env.DATABASE_URL) {
-        throw APIError.internal("DATABASE_URL is missing");
-      }
-
       const rows = await dashboardDB.queryAll<Row>`
         SELECT id, name, url, display_duration, is_active, sort_order, created_at, updated_at
         FROM dashboards
