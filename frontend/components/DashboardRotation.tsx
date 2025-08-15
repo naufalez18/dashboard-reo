@@ -458,13 +458,16 @@ export default function DashboardRotation() {
     <div className="fixed inset-0 bg-white overflow-hidden">
       {/* Main Dashboard Display - Full screen without any obstruction */}
       <div className="absolute inset-0">
-        <DashboardFrame dashboard={currentDashboard} isActive={true} />
+        <DashboardFrame 
+					dashboard={currentDashboard} 
+					isActive={true}
+					isKioskMode={isKioskMode} />
       </div>
 
       {/* Preload Next Dashboard (Hidden) */}
       {nextDashboardItem && nextDashboardItem.id !== currentDashboard.id && (
         <div className="absolute inset-0 opacity-0 pointer-events-none">
-          <DashboardFrame dashboard={nextDashboardItem} isActive={false} />
+          <DashboardFrame dashboard={nextDashboardItem} isActive={false} isKioskMode={isKioskMode} />
         </div>
       )}
 
