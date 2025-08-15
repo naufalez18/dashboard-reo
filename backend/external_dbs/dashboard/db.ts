@@ -1,3 +1,5 @@
+// db.ts
 import { SQLDatabase } from "encore.dev/storage/sqldb";
 
-export default new SQLDatabase("dashboard", {migrations: "./migrations"});
+// ganti "dashboard" -> "dashboard_v2" (bebas, yang penting unik)
+export default new SQLDatabase("dashboard_v2", { migrations: "./migrations" });
