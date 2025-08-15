@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Dashboard } from "~backend/dashboard/types";
+import { Button } from "@/components/ui/button";
+import { Maximize2, Minimize2 } from "lucide-react";
 
 export default function DashboardFrame({
   dashboard,
@@ -10,8 +12,8 @@ export default function DashboardFrame({
   isActive: boolean;
   className?: string;
 }) {
-  // false = Control (overlay aktif, shortcut aplikasi jalan)
-  // true  = Interact (overlay mati, bisa klik di Power BI)
+  // false = Control (overlay aktif → shortcut app jalan)
+  // true  = Interact (overlay mati → bisa interaksi di Power BI)
   const [interactMode, setInteractMode] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -53,22 +55,48 @@ export default function DashboardFrame({
         key={dashboard?.id ?? "iframe"}
         title={dashboard?.name ?? "Dashboard"}
         src={src}
-        className={`absolute inset-0 w-full h-full border-0 ${
-          isActive ? "opacity-100" : "opacity-0"
-        }`}
+        className={`absolute inset-0 w-full h-full border-0 ${isActive ? "opacity-100" : "opacity-0"}`}
         allowFullScreen
       />
 
-      {/* CONTROL MODE OVERLAY (tanpa badge/hint) */}
+      {/* Tombol toggle (tetap ADA) */}
+      <div className="absolute top-3 right-3 z-40">
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            setInteractMode((v) => !v);
+            if (overlayRef.current && interactMode) {
+              requestAnimationFrame(() => overlayRef.current?.focus());
+            }
+          }}
+          title={interactMode ? "Kembali ke Control (Esc)" : "Masuk Interact (F)"}
+          className="bg-white/90 backdrop-blur-sm border border-slate-200"
+        >
+          {interactMode ? (
+            <>
+              <Minimize2 className="w-4 h-4 mr-2" />
+              Control
+            </>
+          ) : (
+            <>
+              <Maximize2 className="w-4 h-4 mr-2" />
+              Interact
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* CONTROL MODE OVERLAY (tanpa status / tanpa teks “Press F…”) */}
       {!interactMode && (
         <div
           ref={overlayRef}
           tabIndex={0}
           className="absolute inset-0 z-30 outline-none"
-          // double-click untuk masuk Interact (opsional UX tanpa badge)
+          // opsional: double-click untuk cepat masuk Interact
           onDoubleClick={() => setInteractMode(true)}
         >
-          {/* lapisan transparan, sengaja kosong tanpa UI */}
+          {/* lapisan transparan kosong */}
           <div className="absolute inset-0 bg-transparent" />
         </div>
       )}
