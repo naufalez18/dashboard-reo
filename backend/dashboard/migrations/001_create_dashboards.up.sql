@@ -7,7 +7,7 @@ BEGIN
 END
 $$;
 
-CREATE TABLE IF NOT EXISTS public.dashboards (
+CREATE TABLE public.dashboards (
     id BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     url TEXT NOT NULL,
