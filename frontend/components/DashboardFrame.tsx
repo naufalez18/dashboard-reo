@@ -1,80 +1,167 @@
-import React, { useState, useEffect } from "react";
-import { AlertCircle } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Dashboard } from "~backend/dashboard/types";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { MousePointer2, Keyboard, Minimize2, Maximize2 } from "lucide-react";
 
-interface DashboardFrameProps {
+/**
+ * DashboardFrame
+ * - Control mode (default): overlay aktif → shortcut aplikasi tetap berfungsi walau klik di area dashboard.
+ * - Interact mode: overlay dimatikan → bisa berinteraksi penuh dengan Power BI (klik/scroll/filter).
+ *
+ * Shortcut:
+ * - "F" → toggle Interact/Control
+ * - "Esc" → keluar dari Interact kembali ke Control
+ */
+export default function DashboardFrame({
+  dashboard,
+  isActive,
+  className = "",
+}: {
   dashboard: Dashboard;
   isActive: boolean;
-}
+  className?: string;
+}) {
+  const [interactMode, setInteractMode] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
-export default function DashboardFrame({ dashboard, isActive }: DashboardFrameProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [key, setKey] = useState(0);
+  // pastikan nilai src aman (fallback ke about:blank)
+  const src = useMemo(() => dashboard?.url || "about:blank", [dashboard?.url]);
 
-  // Force reload when dashboard changes
+  // jaga fokus di app saat Control mode (overlay aktif)
   useEffect(() => {
-    setIsLoading(true);
-    setHasError(false);
-    setKey(prev => prev + 1);
-  }, [dashboard.id, dashboard.url]);
+    if (!interactMode) {
+      // fokuskan overlay agar event keyboard tetap ke parent
+      overlayRef.current?.focus();
+    }
+  }, [interactMode, dashboard?.id]);
 
-  const handleLoad = () => {
-    setIsLoading(false);
-    setHasError(false);
-  };
-
-  const handleError = () => {
-    setIsLoading(false);
-    setHasError(true);
-  };
-
-  if (hasError) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <Card className="p-8 max-w-md text-center bg-white shadow-xl border-0">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-red-700 mb-2">
-            Failed to Load Dashboard
-          </h3>
-          <p className="text-red-600 mb-4 font-medium">{dashboard.name}</p>
-          <p className="text-sm text-slate-500">
-            Please check the URL and try again
-          </p>
-        </Card>
-      </div>
-    );
-  }
+  // keyboard global: F untuk toggle, Esc untuk keluar dari Interact
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // NOTE: saat Interact mode dan iframe terfokus, event mungkin tidak sampai.
+      // Karena itu kita sediakan UI tombol di sudut untuk keluar.
+      if (e.code === "KeyF") {
+        e.preventDefault();
+        setInteractMode((v) => !v);
+        if (overlayRef.current && !interactMode) {
+          // setelah masuk Control (overlay on), arahkan fokus
+          requestAnimationFrame(() => overlayRef.current?.focus());
+        }
+      } else if (e.code === "Escape") {
+        if (interactMode) {
+          e.preventDefault();
+          setInteractMode(false);
+          requestAnimationFrame(() => overlayRef.current?.focus());
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [interactMode]);
 
   return (
-    <div className="w-full h-full relative">
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 z-10">
-          <div className="text-center">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-slate-700 text-lg font-medium">Loading {dashboard.name}...</p>
+    <div
+      ref={containerRef}
+      className={`relative w-full h-full ${className}`}
+      aria-live="polite"
+    >
+      {/* Iframe Power BI */}
+      <iframe
+        key={dashboard?.id ?? "iframe"}
+        title={dashboard?.name ?? "Dashboard"}
+        src={src}
+        className={`absolute inset-0 w-full h-full border-0 ${
+          isActive ? "opacity-100" : "opacity-0"
+        }`}
+        allowFullScreen
+        // sandbox/allow bisa ditambah sesuai kebutuhan Power BI
+      />
+
+      {/* Toggle chip kanan-atas (selalu terlihat di atas iframe) */}
+      <div className="absolute top-3 right-3 z-40 flex items-center gap-2">
+        <Badge
+          variant={interactMode ? "secondary" : "default"}
+          className="px-2 py-1 text-xs"
+          title={interactMode ? "Interact mode (Power BI aktif)" : "Control mode (shortcut aktif)"}
+        >
+          {interactMode ? (
+            <div className="flex items-center gap-1">
+              <MousePointer2 className="w-3.5 h-3.5" />
+              Interact
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <Keyboard className="w-3.5 h-3.5" />
+              Control
+            </div>
+          )}
+        </Badge>
+
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            setInteractMode((v) => !v);
+            if (!interactMode) {
+              // saat masuk Control mode, fokuskan overlay supaya keyboard tetap di app
+              requestAnimationFrame(() => overlayRef.current?.focus());
+            }
+          }}
+          title={interactMode ? "Kembali ke Control (Esc)" : "Masuk Interact (F)"}
+          className="bg-white/90 backdrop-blur-sm border border-slate-200"
+        >
+          {interactMode ? (
+            <>
+              <Minimize2 className="w-4 h-4 mr-2" />
+              Control
+            </>
+          ) : (
+            <>
+              <Maximize2 className="w-4 h-4 mr-2" />
+              Interact
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* Overlay Control mode:
+          - Menutup iframe (pointer-events aktif), jadi klik tetap di app.
+          - Fokus di overlay supaya keyboard event tetap ke window/app.
+      */}
+      {!interactMode && (
+        <div
+          ref={overlayRef}
+          tabIndex={0}
+          className="absolute inset-0 z-30 outline-none"
+          // pointer events aktif agar click tidak menembus iframe
+          // tapi kita kasih UX tip & double-click untuk "Interact"
+          onDoubleClick={() => setInteractMode(true)}
+        >
+          {/* Lapisan transparan */}
+          <div className="absolute inset-0 bg-transparent" />
+          {/* Bantuan kecil kiri-atas */}
+          <div className="absolute left-3 top-14 text-xs text-slate-700 bg-white/85 backdrop-blur-sm border border-slate-200 rounded-md px-2 py-1 shadow-sm">
+            Press <kbd className="px-1 py-0.5 bg-slate-100 rounded">F</kbd> to Interact
           </div>
         </div>
       )}
-      
-      <iframe
-        key={key}
-        src={dashboard.url}
-        className="w-full h-full border-0 block"
-        title={dashboard.name}
-        onLoad={handleLoad}
-        onError={handleError}
-        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
-        style={{
-          opacity: isActive ? 1 : 0,
-          transition: isActive ? 'opacity 0.5s ease-in-out' : 'none',
-          display: 'block',
-          margin: 0,
-          padding: 0
-        }}
-        allowFullScreen
-      />
+
+      {/* Safety: tombol kecil kiri-atas saat Interact mode (kalau keyboard Esc tak terkirim) */}
+      {interactMode && (
+        <button
+          type="button"
+          className="absolute left-3 top-14 z-40 text-xs text-slate-700 bg-white/90 backdrop-blur-sm border border-slate-200 rounded-md px-2 py-1 shadow-sm"
+          onClick={() => {
+            setInteractMode(false);
+            requestAnimationFrame(() => overlayRef.current?.focus());
+          }}
+          title="Kembali ke Control (Esc)"
+        >
+          Exit Interact
+        </button>
+      )}
     </div>
   );
 }
