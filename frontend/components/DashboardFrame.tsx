@@ -91,11 +91,11 @@ export default function DashboardFrame({
               <MousePointer2 className="w-3.5 h-3.5" />
               Interact
             </div>
-          ) : (
-            <div className="flex items-center gap-1">
-              <Keyboard className="w-3.5 h-3.5" />
-              Control
-            </div>
+          ) //: (
+            //<div className="flex items-center gap-1">
+             // <Keyboard className="w-3.5 h-3.5" />
+             // Control
+            //</div>
           )}
         </Badge>
 
