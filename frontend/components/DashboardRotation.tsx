@@ -1,19 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Play, Pause, Settings, RotateCcw, Lock, Unlock, LogOut, User, Shield } from "lucide-react";
+import { Play, Pause, Settings, RotateCcw, LogOut, User, Shield, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "../contexts/AuthContext";
-// import backend from "~backend/client"; // ❌ tidak dipakai lagi
+// import AdminUnlock from "./AdminUnlock"; // ❌ dihapus
 import type { Dashboard } from "~backend/dashboard/types";
 import DashboardFrame from "./DashboardFrame";
 import RotationControls from "./RotationControls";
 import KioskModeToggle from "./KioskModeToggle";
-import AdminUnlock from "./AdminUnlock";
 
-/** === Draggable Badge (dipakai untuk indikator minimal) === */
+/** === Draggable Badge (untuk indikator minimal) === */
 function DraggableBadge({
   current,
   total,
@@ -110,17 +109,15 @@ export default function DashboardRotation() {
   const [countdownInterval, setCountdownInterval] = useState<NodeJS.Timeout | null>(null);
   const [showControls, setShowControls] = useState(true);
   const [isKioskMode, setIsKioskMode] = useState(false);
-  const [showAdminUnlock, setShowAdminUnlock] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { toast } = useToast();
-  const { user, logout, getAuthenticatedBackend } = useAuth(); // ✅ pakai backend yg sudah ada Bearer token
+  const { user, logout, getAuthenticatedBackend } = useAuth();
   const api = getAuthenticatedBackend();
 
   const { data: dashboardsData, isLoading, error, refetch } = useQuery({
     queryKey: ["active-dashboards"],
     queryFn: async () => {
       try {
-        // ✅ coba pakai listActive kalau ada di client; kalau tidak, fallback ke list() + filter
         const svc: any = (api as any).dashboard;
         if (svc && typeof svc.listActive === "function") {
           return await svc.listActive();
@@ -128,7 +125,6 @@ export default function DashboardRotation() {
         const all = await api.dashboard.list();
         return { dashboards: (all?.dashboards ?? []).filter((d: Dashboard) => !!d.isActive) };
       } catch (err: any) {
-        // kalau 401, logout supaya balik ke login
         if (err && typeof err === "object" && err.status === 401) {
           try { logout(); } catch {}
         }
@@ -136,7 +132,7 @@ export default function DashboardRotation() {
         throw err;
       }
     },
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    refetchInterval: 5 * 60 * 1000,
   });
 
   const dashboards: Dashboard[] = dashboardsData?.dashboards || [];
@@ -167,13 +163,9 @@ export default function DashboardRotation() {
     const duration = Math.max(1, Math.round(currentDashboard?.displayDuration || 30));
     setTimeRemaining(duration);
 
-    // Start countdown
-    const countdown = setInterval(() => {
-      setTimeRemaining((prev) => (prev <= 1 ? 0 : prev - 1));
-    }, 1000);
+    const countdown = setInterval(() => setTimeRemaining((prev) => (prev <= 1 ? 0 : prev - 1)), 1000);
     setCountdownInterval(countdown);
 
-    // Start rotation
     const rotation = setInterval(() => {
       setCurrentIndex((prevIndex) => {
         const newIndex = (prevIndex + 1) % dashboards.length;
@@ -195,7 +187,6 @@ export default function DashboardRotation() {
 
   const nextDashboard = useCallback(() => {
     if (dashboards.length === 0) return;
-
     const newIndex = (currentIndex + 1) % dashboards.length;
     setCurrentIndex(newIndex);
     setNextIndex((newIndex + 1) % dashboards.length);
@@ -206,13 +197,9 @@ export default function DashboardRotation() {
       const duration = Math.max(1, Math.round(currentDashboard?.displayDuration || 30));
       setTimeRemaining(duration);
 
-      // Restart countdown
-      const countdown = setInterval(() => {
-        setTimeRemaining((prev) => (prev <= 1 ? 0 : prev - 1));
-      }, 1000);
+      const countdown = setInterval(() => setTimeRemaining((prev) => (prev <= 1 ? 0 : prev - 1)), 1000);
       setCountdownInterval(countdown);
 
-      // Restart rotation
       const rotation = setInterval(() => {
         setCurrentIndex((prevIndex) => {
           const nextIdx = (prevIndex + 1) % dashboards.length;
@@ -229,7 +216,6 @@ export default function DashboardRotation() {
 
   const previousDashboard = useCallback(() => {
     if (dashboards.length === 0) return;
-
     const newIndex = currentIndex === 0 ? dashboards.length - 1 : currentIndex - 1;
     setCurrentIndex(newIndex);
     setNextIndex((newIndex + 1) % dashboards.length);
@@ -240,13 +226,9 @@ export default function DashboardRotation() {
       const duration = Math.max(1, Math.round(currentDashboard?.displayDuration || 30));
       setTimeRemaining(duration);
 
-      // Restart countdown
-      const countdown = setInterval(() => {
-        setTimeRemaining((prev) => (prev <= 1 ? 0 : prev - 1));
-      }, 1000);
+      const countdown = setInterval(() => setTimeRemaining((prev) => (prev <= 1 ? 0 : prev - 1)), 1000);
       setCountdownInterval(countdown);
 
-      // Restart rotation
       const rotation = setInterval(() => {
         setCurrentIndex((prevIndex) => {
           const nextIdx = (prevIndex + 1) % dashboards.length;
@@ -269,11 +251,7 @@ export default function DashboardRotation() {
 
   const toggleKioskMode = useCallback(() => {
     setIsKioskMode(prev => !prev);
-    if (!isKioskMode) {
-      setShowControls(false);
-    } else {
-      setShowControls(true);
-    }
+    setShowControls(prev => (!isKioskMode ? false : true));
   }, [isKioskMode]);
 
   const toggleFullscreen = useCallback(async () => {
@@ -281,48 +259,25 @@ export default function DashboardRotation() {
       if (!document.fullscreenElement) {
         await document.documentElement.requestFullscreen();
         setIsFullscreen(true);
-        toast({
-          title: "Fullscreen Mode",
-          description: "Press F11 or Escape to exit fullscreen",
-        });
+        toast({ title: "Fullscreen Mode", description: "Press F11 or Escape to exit fullscreen" });
       } else {
         await document.exitFullscreen();
         setIsFullscreen(false);
       }
     } catch (error) {
       console.error("Fullscreen error:", error);
-      toast({
-        title: "Fullscreen Error",
-        description: "Unable to toggle fullscreen mode",
-        variant: "destructive",
-      });
+      toast({ title: "Fullscreen Error", description: "Unable to toggle fullscreen mode", variant: "destructive" });
     }
-  }, [toast]);
-
-  const handleAdminUnlock = useCallback(() => {
-    setIsKioskMode(false);
-    setShowControls(true);
-    setShowAdminUnlock(false);
-    toast({
-      title: "Kiosk Mode Disabled",
-      description: "Admin controls are now available",
-    });
   }, [toast]);
 
   const handleLogout = () => {
     logout();
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out",
-    });
+    toast({ title: "Logged Out", description: "You have been successfully logged out" });
   };
 
-  // Monitor fullscreen changes
+  // Fullscreen change monitor
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
+    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
@@ -333,7 +288,6 @@ export default function DashboardRotation() {
       if (['Space', 'ArrowLeft', 'ArrowRight', 'KeyR', 'KeyK', 'F11', 'Escape'].includes(event.code)) {
         event.preventDefault();
       }
-
       switch (event.code) {
         case 'Space':
           isRotating ? stopRotation() : startRotation();
@@ -354,8 +308,11 @@ export default function DashboardRotation() {
           toggleFullscreen();
           break;
         case 'Escape':
+          // ❗ langsung keluar dari kiosk mode, tanpa AdminUnlock
           if (isKioskMode) {
-            setShowAdminUnlock(true);
+            setIsKioskMode(false);
+            setShowControls(true);
+            toast({ title: "Kiosk Mode Disabled", description: "Controls are now available" });
           } else if (document.fullscreenElement) {
             document.exitFullscreen();
           }
@@ -365,7 +322,7 @@ export default function DashboardRotation() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isRotating, startRotation, stopRotation, nextDashboard, previousDashboard, resetRotation, toggleKioskMode, toggleFullscreen, isKioskMode]);
+  }, [isRotating, startRotation, stopRotation, nextDashboard, previousDashboard, resetRotation, toggleKioskMode, toggleFullscreen, isKioskMode, toast]);
 
   // Update next index when dashboards change
   useEffect(() => {
@@ -374,7 +331,7 @@ export default function DashboardRotation() {
     }
   }, [dashboards.length, currentIndex]);
 
-  // Auto-hide controls after 10 seconds of inactivity when rotating (but not in kiosk mode)
+  // Auto-hide controls when rotating (not in kiosk)
   useEffect(() => {
     if (isRotating && !isKioskMode) {
       const timer = setTimeout(() => setShowControls(false), 10000);
@@ -384,19 +341,16 @@ export default function DashboardRotation() {
     }
   }, [isRotating, showControls, isKioskMode]);
 
-  // Show controls on mouse movement (but not in kiosk mode)
+  // Show controls on mouse move (not in kiosk)
   useEffect(() => {
-    const handleMouseMove = () => {
-      if (!isKioskMode) setShowControls(true);
-    };
-
+    const handleMouseMove = () => { if (!isKioskMode) setShowControls(true); };
     if (isRotating && !isKioskMode) {
       document.addEventListener('mousemove', handleMouseMove);
       return () => document.removeEventListener('mousemove', handleMouseMove);
     }
   }, [isRotating, isKioskMode]);
 
-  // Cleanup on unmount
+  // Cleanup
   useEffect(() => clearIntervals, [clearIntervals]);
 
   if (isLoading) {
@@ -456,18 +410,23 @@ export default function DashboardRotation() {
 
   return (
     <div className="fixed inset-0 bg-white overflow-hidden">
-      {/* Main Dashboard Display - Full screen without any obstruction */}
+      {/* Iframe penuh */}
       <div className="absolute inset-0">
-        <DashboardFrame 
-					dashboard={currentDashboard} 
-					isActive={true}
-					isKioskMode={isKioskMode} />
+        <DashboardFrame
+          dashboard={currentDashboard}
+          isActive={true}
+          isKioskMode={isKioskMode}  // tetap kirim untuk tombol Interact/Control hanya saat kiosk
+        />
       </div>
 
-      {/* Preload Next Dashboard (Hidden) */}
+      {/* Preload next (hidden) */}
       {nextDashboardItem && nextDashboardItem.id !== currentDashboard.id && (
         <div className="absolute inset-0 opacity-0 pointer-events-none">
-          <DashboardFrame dashboard={nextDashboardItem} isActive={false} isKioskMode={isKioskMode} />
+          <DashboardFrame
+            dashboard={nextDashboardItem}
+            isActive={false}
+            isKioskMode={isKioskMode}
+          />
         </div>
       )}
 
@@ -476,15 +435,10 @@ export default function DashboardRotation() {
         <div className="absolute top-6 left-6 z-50">
           <div className="flex items-center space-x-3">
             <KioskModeToggle isKioskMode={isKioskMode} onToggle={toggleKioskMode} />
-
             <Card className="bg-white/95 backdrop-blur-sm border-slate-200 p-3 shadow-lg">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  {user?.role === "admin" ? (
-                    <Shield className="w-4 h-4 text-blue-600" />
-                  ) : (
-                    <User className="w-4 h-4 text-blue-600" />
-                  )}
+                  {user?.role === "admin" ? <Shield className="w-4 h-4 text-blue-600" /> : <User className="w-4 h-4 text-blue-600" />}
                 </div>
                 <div className="text-sm">
                   <div className="font-medium text-slate-800">{user?.username}</div>
@@ -493,13 +447,7 @@ export default function DashboardRotation() {
                 <Badge variant={user?.role === "admin" ? "destructive" : "secondary"} className="text-xs">
                   {user?.role}
                 </Badge>
-                <Button
-                  onClick={handleLogout}
-                  size="sm"
-                  variant="ghost"
-                  className="text-slate-400 hover:text-slate-600 p-1"
-                  title="Logout"
-                >
+                <Button onClick={handleLogout} size="sm" variant="ghost" className="text-slate-400 hover:text-slate-600 p-1" title="Logout">
                   <LogOut className="w-4 h-4" />
                 </Button>
               </div>
@@ -508,7 +456,7 @@ export default function DashboardRotation() {
         </div>
       )}
 
-      {/* Control Panel - Only show when controls are visible and not in kiosk mode */}
+      {/* Controls */}
       {showControls && !isKioskMode && (
         <div className="absolute top-6 right-6 z-50 transition-opacity duration-300">
           <RotationControls
@@ -529,16 +477,12 @@ export default function DashboardRotation() {
         </div>
       )}
 
-      {/* Minimal Status Indicator → sekarang DRAGGABLE */}
+      {/* Minimal Status Indicator → DRAGGABLE */}
       {isRotating && (!showControls || isKioskMode) && (
-        <DraggableBadge
-          current={currentIndex + 1}
-          total={dashboards.length}
-          seconds={timeRemaining}
-        />
+        <DraggableBadge current={currentIndex + 1} total={dashboards.length} seconds={timeRemaining} />
       )}
 
-      {/* Keyboard Shortcuts Hint - Only show when not in kiosk mode and not rotating */}
+      {/* Keyboard Shortcuts Hint */}
       {!isKioskMode && !isRotating && showControls && (
         <div className="absolute bottom-6 left-6 z-50">
           <Card className="bg-white/95 backdrop-blur-sm border-slate-200 p-4 shadow-lg">
@@ -548,6 +492,7 @@ export default function DashboardRotation() {
               <div><kbd className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono text-xs">←→</kbd> Navigate</div>
               <div><kbd className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono text-xs">R</kbd> Reset</div>
               <div><kbd className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono text-xs">K</kbd> Kiosk Mode</div>
+              <div><kbd className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono text-xs">F</kbd> Interact / Control dashboard</div>
               <div><kbd className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono text-xs">F11</kbd> Fullscreen</div>
               <div><kbd className="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono text-xs">Esc</kbd> Exit Kiosk/Fullscreen</div>
             </div>
@@ -555,20 +500,9 @@ export default function DashboardRotation() {
         </div>
       )}
 
-      {/* Admin Unlock Modal */}
-      {showAdminUnlock && (
-        <AdminUnlock
-          onUnlock={handleAdminUnlock}
-          onCancel={() => setShowAdminUnlock(false)}
-        />
-      )}
-
       {/* Click anywhere to show controls when hidden (but not in kiosk mode) */}
       {!showControls && !isKioskMode && (
-        <div
-          className="absolute inset-0 z-40 cursor-pointer"
-          onClick={() => setShowControls(true)}
-        />
+        <div className="absolute inset-0 z-40 cursor-pointer" onClick={() => setShowControls(true)} />
       )}
     </div>
   );
