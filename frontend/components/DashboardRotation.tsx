@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Play, Pause, Settings, RotateCcw, Lock, Unlock, LogOut, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,12 +6,100 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "../contexts/AuthContext";
-import backend from "~backend/client";
+// import backend from "~backend/client"; // ❌ tidak dipakai lagi
 import type { Dashboard } from "~backend/dashboard/types";
 import DashboardFrame from "./DashboardFrame";
 import RotationControls from "./RotationControls";
 import KioskModeToggle from "./KioskModeToggle";
 import AdminUnlock from "./AdminUnlock";
+
+/** === Draggable Badge (dipakai untuk indikator minimal) === */
+function DraggableBadge({
+  current,
+  total,
+  seconds,
+  storageKey = "rotation-badge-pos",
+}: {
+  current: number;
+  total: number;
+  seconds: number;
+  storageKey?: string;
+}) {
+  type Pos = { x: number; y: number };
+  const pillRef = useRef<HTMLDivElement>(null);
+  const dragStart = useRef<{ dx: number; dy: number } | null>(null);
+  const [pos, setPos] = useState<Pos>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      return saved ? JSON.parse(saved) : { x: 24, y: 24 };
+    } catch {
+      return { x: 24, y: 24 };
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(pos));
+    } catch {}
+  }, [pos, storageKey]);
+
+  const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+
+  useEffect(() => {
+    const el = pillRef.current;
+    if (!el) return;
+
+    const onDown = (e: PointerEvent) => {
+      el.setPointerCapture(e.pointerId);
+      dragStart.current = { dx: e.clientX - pos.x, dy: e.clientY - pos.y };
+      el.classList.add("cursor-grabbing");
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!dragStart.current) return;
+      const root = document.documentElement;
+      const vw = root.clientWidth;
+      const vh = root.clientHeight;
+      const rect = el.getBoundingClientRect();
+      const x = clamp(e.clientX - dragStart.current.dx, 0, vw - rect.width);
+      const y = clamp(e.clientY - dragStart.current.dy, 0, vh - rect.height);
+      setPos({ x, y });
+    };
+    const onUp = (e: PointerEvent) => {
+      if (!dragStart.current) return;
+      dragStart.current = null;
+      el.releasePointerCapture(e.pointerId);
+      el.classList.remove("cursor-grabbing");
+    };
+
+    el.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      el.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [pos.x, pos.y]);
+
+  return (
+    <div
+      ref={pillRef}
+      role="button"
+      aria-label="status badge draggable"
+      tabIndex={0}
+      style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
+      className="fixed z-[1000] select-none cursor-grab"
+    >
+      <div className="bg-white/95 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center space-x-3 shadow-lg border border-slate-200">
+        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+        <span className="text-slate-700 text-sm font-semibold">
+          {current}/{total}
+        </span>
+        <span className="text-slate-500 text-sm">{seconds}s</span>
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardRotation() {
   const [isRotating, setIsRotating] = useState(false);
@@ -25,14 +113,25 @@ export default function DashboardRotation() {
   const [showAdminUnlock, setShowAdminUnlock] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { toast } = useToast();
-  const { user, logout } = useAuth();
+  const { user, logout, getAuthenticatedBackend } = useAuth(); // ✅ pakai backend yg sudah ada Bearer token
+  const api = getAuthenticatedBackend();
 
   const { data: dashboardsData, isLoading, error, refetch } = useQuery({
     queryKey: ["active-dashboards"],
     queryFn: async () => {
       try {
-        return await backend.dashboard.listActive();
-      } catch (err) {
+        // ✅ coba pakai listActive kalau ada di client; kalau tidak, fallback ke list() + filter
+        const svc: any = (api as any).dashboard;
+        if (svc && typeof svc.listActive === "function") {
+          return await svc.listActive();
+        }
+        const all = await api.dashboard.list();
+        return { dashboards: (all?.dashboards ?? []).filter((d: Dashboard) => !!d.isActive) };
+      } catch (err: any) {
+        // kalau 401, logout supaya balik ke login
+        if (err && typeof err === "object" && err.status === 401) {
+          try { logout(); } catch {}
+        }
         console.error("Failed to fetch active dashboards:", err);
         throw err;
       }
@@ -40,7 +139,7 @@ export default function DashboardRotation() {
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 
-  const dashboards = dashboardsData?.dashboards || [];
+  const dashboards: Dashboard[] = dashboardsData?.dashboards || [];
 
   const clearIntervals = useCallback(() => {
     if (rotationInterval) {
@@ -65,17 +164,12 @@ export default function DashboardRotation() {
 
     setIsRotating(true);
     const currentDashboard = dashboards[currentIndex];
-    const duration = currentDashboard?.displayDuration || 30;
+    const duration = Math.max(1, Math.round(currentDashboard?.displayDuration || 30));
     setTimeRemaining(duration);
 
     // Start countdown
     const countdown = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          return 0;
-        }
-        return prev - 1;
-      });
+      setTimeRemaining((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
     setCountdownInterval(countdown);
 
@@ -85,7 +179,8 @@ export default function DashboardRotation() {
         const newIndex = (prevIndex + 1) % dashboards.length;
         setNextIndex((newIndex + 1) % dashboards.length);
         const nextDashboard = dashboards[newIndex];
-        setTimeRemaining(nextDashboard?.displayDuration || 30);
+        const nextDuration = Math.max(1, Math.round(nextDashboard?.displayDuration || 30));
+        setTimeRemaining(nextDuration);
         return newIndex;
       });
     }, duration * 1000);
@@ -100,25 +195,20 @@ export default function DashboardRotation() {
 
   const nextDashboard = useCallback(() => {
     if (dashboards.length === 0) return;
-    
+
     const newIndex = (currentIndex + 1) % dashboards.length;
     setCurrentIndex(newIndex);
     setNextIndex((newIndex + 1) % dashboards.length);
-    
+
     if (isRotating) {
       clearIntervals();
       const currentDashboard = dashboards[newIndex];
-      const duration = currentDashboard?.displayDuration || 30;
+      const duration = Math.max(1, Math.round(currentDashboard?.displayDuration || 30));
       setTimeRemaining(duration);
 
       // Restart countdown
       const countdown = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            return 0;
-          }
-          return prev - 1;
-        });
+        setTimeRemaining((prev) => (prev <= 1 ? 0 : prev - 1));
       }, 1000);
       setCountdownInterval(countdown);
 
@@ -128,7 +218,8 @@ export default function DashboardRotation() {
           const nextIdx = (prevIndex + 1) % dashboards.length;
           setNextIndex((nextIdx + 1) % dashboards.length);
           const nextDashboard = dashboards[nextIdx];
-          setTimeRemaining(nextDashboard?.displayDuration || 30);
+          const nextDuration = Math.max(1, Math.round(nextDashboard?.displayDuration || 30));
+          setTimeRemaining(nextDuration);
           return nextIdx;
         });
       }, duration * 1000);
@@ -138,25 +229,20 @@ export default function DashboardRotation() {
 
   const previousDashboard = useCallback(() => {
     if (dashboards.length === 0) return;
-    
+
     const newIndex = currentIndex === 0 ? dashboards.length - 1 : currentIndex - 1;
     setCurrentIndex(newIndex);
     setNextIndex((newIndex + 1) % dashboards.length);
-    
+
     if (isRotating) {
       clearIntervals();
       const currentDashboard = dashboards[newIndex];
-      const duration = currentDashboard?.displayDuration || 30;
+      const duration = Math.max(1, Math.round(currentDashboard?.displayDuration || 30));
       setTimeRemaining(duration);
 
       // Restart countdown
       const countdown = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            return 0;
-          }
-          return prev - 1;
-        });
+        setTimeRemaining((prev) => (prev <= 1 ? 0 : prev - 1));
       }, 1000);
       setCountdownInterval(countdown);
 
@@ -166,7 +252,8 @@ export default function DashboardRotation() {
           const nextIdx = (prevIndex + 1) % dashboards.length;
           setNextIndex((nextIdx + 1) % dashboards.length);
           const nextDashboard = dashboards[nextIdx];
-          setTimeRemaining(nextDashboard?.displayDuration || 30);
+          const nextDuration = Math.max(1, Math.round(nextDashboard?.displayDuration || 30));
+          setTimeRemaining(nextDuration);
           return nextIdx;
         });
       }, duration * 1000);
@@ -243,18 +330,13 @@ export default function DashboardRotation() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Prevent default behavior for our shortcuts
       if (['Space', 'ArrowLeft', 'ArrowRight', 'KeyR', 'KeyK', 'F11', 'Escape'].includes(event.code)) {
         event.preventDefault();
       }
 
       switch (event.code) {
         case 'Space':
-          if (isRotating) {
-            stopRotation();
-          } else {
-            startRotation();
-          }
+          isRotating ? stopRotation() : startRotation();
           break;
         case 'ArrowRight':
           nextDashboard();
@@ -266,9 +348,7 @@ export default function DashboardRotation() {
           resetRotation();
           break;
         case 'KeyK':
-          if (!isKioskMode) {
-            toggleKioskMode();
-          }
+          if (!isKioskMode) toggleKioskMode();
           break;
         case 'F11':
           toggleFullscreen();
@@ -297,9 +377,7 @@ export default function DashboardRotation() {
   // Auto-hide controls after 10 seconds of inactivity when rotating (but not in kiosk mode)
   useEffect(() => {
     if (isRotating && !isKioskMode) {
-      const timer = setTimeout(() => {
-        setShowControls(false);
-      }, 10000);
+      const timer = setTimeout(() => setShowControls(false), 10000);
       return () => clearTimeout(timer);
     } else if (!isKioskMode) {
       setShowControls(true);
@@ -309,9 +387,7 @@ export default function DashboardRotation() {
   // Show controls on mouse movement (but not in kiosk mode)
   useEffect(() => {
     const handleMouseMove = () => {
-      if (!isKioskMode) {
-        setShowControls(true);
-      }
+      if (!isKioskMode) setShowControls(true);
     };
 
     if (isRotating && !isKioskMode) {
@@ -321,11 +397,7 @@ export default function DashboardRotation() {
   }, [isRotating, isKioskMode]);
 
   // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      clearIntervals();
-    };
-  }, [clearIntervals]);
+  useEffect(() => clearIntervals, [clearIntervals]);
 
   if (isLoading) {
     return (
@@ -386,19 +458,13 @@ export default function DashboardRotation() {
     <div className="fixed inset-0 bg-white overflow-hidden">
       {/* Main Dashboard Display - Full screen without any obstruction */}
       <div className="absolute inset-0">
-        <DashboardFrame
-          dashboard={currentDashboard}
-          isActive={true}
-        />
+        <DashboardFrame dashboard={currentDashboard} isActive={true} />
       </div>
 
       {/* Preload Next Dashboard (Hidden) */}
       {nextDashboardItem && nextDashboardItem.id !== currentDashboard.id && (
         <div className="absolute inset-0 opacity-0 pointer-events-none">
-          <DashboardFrame
-            dashboard={nextDashboardItem}
-            isActive={false}
-          />
+          <DashboardFrame dashboard={nextDashboardItem} isActive={false} />
         </div>
       )}
 
@@ -406,11 +472,8 @@ export default function DashboardRotation() {
       {!isKioskMode && (
         <div className="absolute top-6 left-6 z-50">
           <div className="flex items-center space-x-3">
-            <KioskModeToggle
-              isKioskMode={isKioskMode}
-              onToggle={toggleKioskMode}
-            />
-            
+            <KioskModeToggle isKioskMode={isKioskMode} onToggle={toggleKioskMode} />
+
             <Card className="bg-white/95 backdrop-blur-sm border-slate-200 p-3 shadow-lg">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -463,19 +526,13 @@ export default function DashboardRotation() {
         </div>
       )}
 
-      {/* Minimal Status Indicator - Only show when rotating and controls are hidden or in kiosk mode */}
+      {/* Minimal Status Indicator → sekarang DRAGGABLE */}
       {isRotating && (!showControls || isKioskMode) && (
-        <div className="absolute top-6 left-6 z-50">
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center space-x-3 shadow-lg border border-slate-200">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-            <span className="text-slate-700 text-sm font-semibold">
-              {currentIndex + 1}/{dashboards.length}
-            </span>
-            <span className="text-slate-500 text-sm">
-              {timeRemaining}s
-            </span>
-          </div>
-        </div>
+        <DraggableBadge
+          current={currentIndex + 1}
+          total={dashboards.length}
+          seconds={timeRemaining}
+        />
       )}
 
       {/* Keyboard Shortcuts Hint - Only show when not in kiosk mode and not rotating */}
@@ -505,7 +562,7 @@ export default function DashboardRotation() {
 
       {/* Click anywhere to show controls when hidden (but not in kiosk mode) */}
       {!showControls && !isKioskMode && (
-        <div 
+        <div
           className="absolute inset-0 z-40 cursor-pointer"
           onClick={() => setShowControls(true)}
         />
