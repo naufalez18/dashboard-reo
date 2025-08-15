@@ -1,6 +1,6 @@
 import { SQLDatabase } from "encore.dev/storage/sqldb";
 
-// Create the dashboard database
-export const dashboardDB = new SQLDatabase("dashboard", {
+// Ganti nama resource DB agar unik (hindari bentrok sebelumnya)
+export const dashboardDB = new SQLDatabase("dashboard_v2", {
   migrations: "./migrations",
 });
