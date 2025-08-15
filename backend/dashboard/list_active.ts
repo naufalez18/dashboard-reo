@@ -1,7 +1,6 @@
 // backend/dashboard/list_active.ts
 import { api, APIError } from "encore.dev/api";
-import db from "../db"; // ✅ kalau file ini 1 folder lebih dalam dari db.ts
-
+import db from "./db";
 
 export const listActive = api<void, { dashboards: any[] }>(
   { method: "GET", path: "/dashboards/active", expose: true },
