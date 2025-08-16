@@ -7,7 +7,7 @@ interface AuthParams {
   authorization?: Header<"Authorization">;
 }
 
-const auth = authHandler<AuthParams, AuthData>(async (data) => {
+export const auth = authHandler<AuthParams, AuthData>(async (data) => {
   const token = data.authorization?.replace("Bearer ", "");
   if (!token) {
     throw APIError.unauthenticated("missing token");
