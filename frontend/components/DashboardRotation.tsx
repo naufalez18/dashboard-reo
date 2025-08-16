@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "../contexts/AuthContext";
-// import AdminUnlock from "./AdminUnlock"; // ❌ dihapus
 import type { Dashboard } from "~backend/dashboard/types";
 import DashboardFrame from "./DashboardFrame";
 import RotationControls from "./RotationControls";
@@ -308,7 +307,7 @@ export default function DashboardRotation() {
           toggleFullscreen();
           break;
         case 'Escape':
-          // ❗ langsung keluar dari kiosk mode, tanpa AdminUnlock
+          // ❗ langsung keluar dari kiosk mode
           if (isKioskMode) {
             setIsKioskMode(false);
             setShowControls(true);
