@@ -17,6 +17,9 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
+    "types": [
+      "vite/client"
+    ],
     "baseUrl": ".",
     "paths": {
       "@/*": [
@@ -27,6 +30,9 @@
       ],
       "~backend/client": [
         "./client.ts"
+      ],
+      "~encore/*": [
+        "../backend/encore.gen/*"
       ]
     }
   },
