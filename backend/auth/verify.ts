@@ -4,18 +4,25 @@ import type { User } from "./types";
 // Simple JWT verification without external dependencies
 function verifySimpleJWT(token: string): any {
   try {
-    const parts = token.split('.');
+    const parts = token.split(".");
     if (parts.length !== 3) {
       throw new Error("Invalid token format");
     }
-    
-    const payload = JSON.parse(atob(parts[1]));
-    
+
+    let json: string;
+    try {
+      json = Buffer.from(parts[1], "base64url").toString("utf-8");
+    } catch {
+      throw new Error("Invalid token encoding");
+    }
+
+    const payload = JSON.parse(json);
+
     // Check expiration
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
       throw new Error("Token expired");
     }
-    
+
     return payload;
   } catch (error) {
     throw new Error("Invalid token");

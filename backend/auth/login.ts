@@ -4,12 +4,14 @@ import type { LoginRequest, LoginResponse, User } from "./types";
 // Simple JWT implementation without external dependencies
 function createSimpleJWT(payload: any): string {
   const header = { alg: "HS256", typ: "JWT" };
-  const encodedHeader = btoa(JSON.stringify(header));
-  const encodedPayload = btoa(JSON.stringify(payload));
-  
+  const encodedHeader = Buffer.from(JSON.stringify(header)).toString("base64url");
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url");
+
   // Simple signature using a hardcoded secret for demo purposes
-  const signature = btoa(`${encodedHeader}.${encodedPayload}.demo-secret`);
-  
+  const signature = Buffer.from(
+    `${encodedHeader}.${encodedPayload}.demo-secret`,
+  ).toString("base64url");
+
   return `${encodedHeader}.${encodedPayload}.${signature}`;
 }
 
