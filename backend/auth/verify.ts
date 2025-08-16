@@ -1,5 +1,6 @@
 import { api, APIError } from "encore.dev/api";
 import type { User } from "./types";
+import { base64Decode } from "./base64";
 
 // Simple JWT verification without external dependencies
 function verifySimpleJWT(token: string): any {
@@ -9,7 +10,7 @@ function verifySimpleJWT(token: string): any {
       throw new Error("Invalid token format");
     }
     
-    const payload = JSON.parse(atob(parts[1]));
+    const payload = JSON.parse(base64Decode(parts[1]));
     
     // Check expiration
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {

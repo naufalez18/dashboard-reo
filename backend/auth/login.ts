@@ -1,15 +1,16 @@
 import { api, APIError } from "encore.dev/api";
 import type { LoginRequest, LoginResponse, User } from "./types";
+import { base64Encode } from "./base64";
 
 // Simple JWT implementation without external dependencies
 function createSimpleJWT(payload: any): string {
   const header = { alg: "HS256", typ: "JWT" };
-  const encodedHeader = btoa(JSON.stringify(header));
-  const encodedPayload = btoa(JSON.stringify(payload));
-  
+  const encodedHeader = base64Encode(JSON.stringify(header));
+  const encodedPayload = base64Encode(JSON.stringify(payload));
+
   // Simple signature using a hardcoded secret for demo purposes
-  const signature = btoa(`${encodedHeader}.${encodedPayload}.demo-secret`);
-  
+  const signature = base64Encode(`${encodedHeader}.${encodedPayload}.demo-secret`);
+
   return `${encodedHeader}.${encodedPayload}.${signature}`;
 }
 
