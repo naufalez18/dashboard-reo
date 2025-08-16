@@ -27,12 +27,16 @@
       ],
       "~backend/client": [
         "./client.ts"
+      ],
+      "~encore/*": [
+        "../backend/encore.gen/*"
       ]
     }
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "env.d.ts"
   ],
   "exclude": [
     "node_modules"
