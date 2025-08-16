@@ -9,7 +9,7 @@ export interface LoginResponse {
 }
 
 export interface User {
-  id: string;
+  id: number;
   username: string;
   role: "admin" | "viewer";
 }
