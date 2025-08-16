@@ -7,7 +7,8 @@ import type { LoginRequest, LoginResponse, User } from "./types";
 export const login = api<LoginRequest, LoginResponse>(
   { expose: true, method: "POST", path: "/auth/login" },
   async (req) => {
-    const { username, password } = req;
+    const username = req.username?.trim();
+    const password = req.password?.trim();
 
     if (!username || !password) {
       throw APIError.invalidArgument("Username and password are required");
@@ -19,14 +20,14 @@ export const login = api<LoginRequest, LoginResponse>(
       password_hash: string;
       role: "admin" | "viewer";
     }>`SELECT id, username, password_hash, role FROM users WHERE username = ${
-      username.trim()
+      username
     }`;
 
     if (!row) {
       throw APIError.unauthenticated("Invalid username or password");
     }
 
-    const match = await bcrypt.compare(password.trim(), row.password_hash);
+    const match = await bcrypt.compare(password, row.password_hash);
     if (!match) {
       throw APIError.unauthenticated("Invalid username or password");
     }
