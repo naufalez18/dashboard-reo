@@ -14,7 +14,7 @@ type Row = {
 
 export const listActive = api<void, { dashboards: any[] }>(
   { method: "GET", path: "/dashboards/active", expose: true },
-  async (_req, _ctx) => {
+  async () => {
     try {
       const rows = await dashboardDB.queryAll<Row>`
         SELECT id, name, url, display_duration, is_active, sort_order, created_at, updated_at
