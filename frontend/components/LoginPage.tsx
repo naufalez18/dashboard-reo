@@ -237,7 +237,7 @@ export default function LoginPage() {
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-blue-200 text-sm">
-            © 2025 REO Dashboard Monitoring. ❤️ Made With Love by Sayyid Naufal.
+            © 2025 REO Dashboard Monitoring. Made With ❤️ by Naufal.
           </p>
         </div>
       </div>
