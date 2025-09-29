@@ -43,7 +43,7 @@ export default function LoginPage() {
       await login(username.trim(), password.trim());
       toast({
         title: "Login Successful",
-        description: "Welcome to Dashboard Rotation System",
+        description: "Welcome to REO Dashboard Rotation System",
       });
     } catch (error: any) {
       console.error("Login error:", error);
