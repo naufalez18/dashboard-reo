@@ -213,7 +213,24 @@ export default function LoginPage() {
             </div>
 
             {/* Features */}
-     
+            <div className="mt-6 pt-6 border-t border-slate-200">
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div className="p-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <Monitor className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div className="text-xs font-medium text-slate-700">Dashboard Rotation</div>
+                  <div className="text-xs text-slate-500">Automated cycling</div>
+                </div>
+                <div className="p-3">
+                  <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <Shield className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div className="text-xs font-medium text-slate-700">Role-Based Access</div>
+                  <div className="text-xs text-slate-500">Secure permissions</div>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
