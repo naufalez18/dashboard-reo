@@ -1,28 +1,17 @@
-import { api, APIError } from "encore.dev/api";
-import { getAuthData } from "~encore/auth";
+import { api, APIError, Header } from "encore.dev/api";
+import { requireAdmin } from "../auth/middleware";
 import { dashboardDB } from "./db";
 import type { CreateDashboardRequest, Dashboard } from "./types";
 
-// Creates a new dashboard.
-export const create = api<CreateDashboardRequest, Dashboard>(
-  { expose: true, method: "POST", path: "/dashboards" },
-  async (req) => {
-    console.log("Create dashboard endpoint called");
-    
-    // TODO: Re-enable authentication once frontend auth configuration is working
-    // const auth = getAuthData();
-    // console.log("Auth data from getAuthData():", auth);
-    
-    // if (!auth) {
-    //   console.log("No auth data found, throwing unauthenticated error");
-    //   throw APIError.unauthenticated("Authentication required");
-    // }
-    
-    // // Only admin users can create dashboards
-    // if (auth.role !== "admin") {
-    //   throw APIError.permissionDenied("Insufficient permissions");
-    // }
+interface CreateDashboardParams extends CreateDashboardRequest {
+  authorization?: Header<"Authorization">;
+}
 
+export const create = api<CreateDashboardParams, Dashboard>(
+  { expose: true, method: "POST", path: "/dashboards" },
+  async (params) => {
+    await requireAdmin(params.authorization);
+    
     const row = await dashboardDB.queryRow<{
       id: number;
       name: string;
@@ -34,7 +23,7 @@ export const create = api<CreateDashboardRequest, Dashboard>(
       updated_at: Date;
     }>`
       INSERT INTO dashboards (name, url, display_duration, sort_order)
-      VALUES (${req.name}, ${req.url}, ${req.displayDuration || 30}, ${req.sortOrder || 0})
+      VALUES (${params.name}, ${params.url}, ${params.displayDuration || 30}, ${params.sortOrder || 0})
       RETURNING id, name, url, display_duration, is_active, sort_order, created_at, updated_at
     `;
 

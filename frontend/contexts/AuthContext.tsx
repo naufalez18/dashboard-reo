@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import backend from "~backend/client";
+import { createAuthenticatedBackend } from "../lib/backend-client";
 import type { User } from "~backend/auth/types";
 
 interface AuthContextType {
@@ -111,12 +112,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const getAuthenticatedBackend = () => {
-    if (!token) {
-      return backend;
-    }
-    
-    // TODO: Configure proper authentication headers once Encore client supports it
-    return backend;
+    return createAuthenticatedBackend(token);
   };
 
   const value = {

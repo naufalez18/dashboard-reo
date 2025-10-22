@@ -1,47 +1,40 @@
-import { api, APIError } from "encore.dev/api";
-import { getAuthData } from "~encore/auth";
+import { api, APIError, Header } from "encore.dev/api";
+import { requireAdmin } from "../auth/middleware";
 import { dashboardDB } from "./db";
 import type { UpdateDashboardRequest, Dashboard } from "./types";
 
-// Updates an existing dashboard.
-export const update = api<UpdateDashboardRequest, Dashboard>(
+interface UpdateDashboardParams extends UpdateDashboardRequest {
+  authorization?: Header<"Authorization">;
+}
+
+export const update = api<UpdateDashboardParams, Dashboard>(
   { expose: true, method: "PUT", path: "/dashboards/:id" },
-  async (req) => {
-    // TODO: Re-enable authentication once auth is working
-    // const auth = getAuthData();
-    
-    // if (!auth) {
-    //   throw APIError.unauthenticated("Authentication required");
-    // }
-    
-    // // Only admin users can update dashboards
-    // if (auth.role !== "admin") {
-    //   throw APIError.permissionDenied("Insufficient permissions");
-    // }
+  async (params) => {
+    await requireAdmin(params.authorization);
 
     const updates: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
 
-    if (req.name !== undefined) {
+    if (params.name !== undefined) {
       updates.push(`name = $${paramIndex++}`);
-      values.push(req.name);
+      values.push(params.name);
     }
-    if (req.url !== undefined) {
+    if (params.url !== undefined) {
       updates.push(`url = $${paramIndex++}`);
-      values.push(req.url);
+      values.push(params.url);
     }
-    if (req.displayDuration !== undefined) {
+    if (params.displayDuration !== undefined) {
       updates.push(`display_duration = $${paramIndex++}`);
-      values.push(req.displayDuration);
+      values.push(params.displayDuration);
     }
-    if (req.isActive !== undefined) {
+    if (params.isActive !== undefined) {
       updates.push(`is_active = $${paramIndex++}`);
-      values.push(req.isActive);
+      values.push(params.isActive);
     }
-    if (req.sortOrder !== undefined) {
+    if (params.sortOrder !== undefined) {
       updates.push(`sort_order = $${paramIndex++}`);
-      values.push(req.sortOrder);
+      values.push(params.sortOrder);
     }
 
     if (updates.length === 0) {
@@ -49,7 +42,7 @@ export const update = api<UpdateDashboardRequest, Dashboard>(
     }
 
     updates.push(`updated_at = NOW()`);
-    values.push(req.id);
+    values.push(params.id);
 
     const query = `
       UPDATE dashboards 
