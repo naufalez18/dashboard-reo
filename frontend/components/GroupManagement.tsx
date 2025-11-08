@@ -67,16 +67,11 @@ export function GroupManagement() {
 
     try {
       if (selectedGroup) {
-        await fetch(`/api/groups/${selectedGroup.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            ...formData,
-            dashboardIds: groupDashboardIds,
-          }),
+        await backend.group.update({
+          id: selectedGroup.id,
+          ...formData,
+          dashboardIds: groupDashboardIds,
+          authorization: `Bearer ${token}`,
         });
 
         toast({
@@ -84,16 +79,10 @@ export function GroupManagement() {
           description: "Group updated successfully",
         });
       } else {
-        await fetch("/api/groups", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            ...formData,
-            dashboardIds: groupDashboardIds,
-          }),
+        await backend.group.create({
+          ...formData,
+          dashboardIds: groupDashboardIds,
+          authorization: `Bearer ${token}`,
         });
 
         toast({
@@ -122,9 +111,9 @@ export function GroupManagement() {
     if (!confirm("Are you sure you want to delete this group?")) return;
 
     try {
-      await fetch(`/api/groups/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+      await backend.group.deleteGroup({
+        id,
+        authorization: `Bearer ${token}`,
       });
 
       toast({
