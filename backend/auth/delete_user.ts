@@ -10,7 +10,7 @@ interface DeleteUserParams {
 export const deleteUser = api<DeleteUserParams, void>(
   { expose: true, method: "DELETE", path: "/users/:id" },
   async (params) => {
-    await requireAdmin(params.authorization);
+    await requireAdmin(params?.authorization);
 
     await authDB.exec`
       DELETE FROM sessions WHERE user_id = ${params.id}

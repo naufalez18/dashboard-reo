@@ -10,7 +10,7 @@ interface UpdateDashboardParams extends UpdateDashboardRequest {
 export const update = api<UpdateDashboardParams, Dashboard>(
   { expose: true, method: "PUT", path: "/dashboards/:id" },
   async (params) => {
-    await requireAdmin(params.authorization);
+    await requireAdmin(params?.authorization);
 
     const updates: string[] = [];
     const values: any[] = [];

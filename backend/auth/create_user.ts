@@ -11,7 +11,7 @@ interface CreateUserParams extends CreateUserRequest {
 export const createUser = api<CreateUserParams, User>(
   { expose: true, method: "POST", path: "/users" },
   async (params) => {
-    await requireAdmin(params.authorization);
+    await requireAdmin(params?.authorization);
 
     if (!params.username || !params.password) {
       throw APIError.invalidArgument("Username and password are required");

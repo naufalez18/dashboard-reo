@@ -11,7 +11,7 @@ interface CreateGroupParams extends CreateGroupRequest {
 export const create = api<CreateGroupParams, Group>(
   { expose: true, method: "POST", path: "/groups" },
   async (params) => {
-    await requireAdmin(params.authorization);
+    await requireAdmin(params?.authorization);
 
     const group = await authDB.queryRow<{
       id: number;

@@ -10,7 +10,7 @@ interface DeleteDashboardParams {
 export const deleteDashboard = api<DeleteDashboardParams, void>(
   { expose: true, method: "DELETE", path: "/dashboards/:id" },
   async (params) => {
-    await requireAdmin(params.authorization);
+    await requireAdmin(params?.authorization);
 
     await dashboardDB.exec`
       DELETE FROM dashboards WHERE id = ${params.id}

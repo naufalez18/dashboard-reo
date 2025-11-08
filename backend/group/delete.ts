@@ -11,7 +11,7 @@ interface DeleteGroupParams {
 export const deleteGroup = api<DeleteGroupParams, void>(
   { expose: true, method: "DELETE", path: "/groups/:id" },
   async (params) => {
-    await requireAdmin(params.authorization);
+    await requireAdmin(params?.authorization);
 
     await dashboardDB.exec`
       DELETE FROM group_dashboards

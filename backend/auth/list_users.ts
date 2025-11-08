@@ -10,7 +10,7 @@ interface ListUsersParams {
 export const listUsers = api<ListUsersParams, { users: User[] }>(
   { expose: true, method: "GET", path: "/users" },
   async (params) => {
-    await requireAdmin(params.authorization);
+    await requireAdmin(params?.authorization);
 
     const rows = await authDB.queryAll<{
       id: number;

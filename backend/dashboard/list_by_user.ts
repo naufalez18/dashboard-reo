@@ -10,7 +10,7 @@ interface ListByUserParams {
 export const listByUser = api<ListByUserParams, { dashboards: Dashboard[] }>(
   { expose: true, method: "GET", path: "/dashboards/my-dashboards" },
   async (params) => {
-    const authData = await requireAuth(params.authorization);
+    const authData = await requireAuth(params?.authorization);
 
     if (authData.role === "admin") {
       const rows = await dashboardDB.queryAll<{

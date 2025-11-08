@@ -11,7 +11,7 @@ interface UpdateUserParams extends UpdateUserRequest {
 export const updateUser = api<UpdateUserParams, User>(
   { expose: true, method: "PUT", path: "/users/:id" },
   async (params) => {
-    await requireAdmin(params.authorization);
+    await requireAdmin(params?.authorization);
 
     const updates: string[] = [];
     const values: any[] = [];

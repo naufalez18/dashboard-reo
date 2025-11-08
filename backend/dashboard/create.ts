@@ -10,7 +10,7 @@ interface CreateDashboardParams extends CreateDashboardRequest {
 export const create = api<CreateDashboardParams, Dashboard>(
   { expose: true, method: "POST", path: "/dashboards" },
   async (params) => {
-    await requireAdmin(params.authorization);
+    await requireAdmin(params?.authorization);
     
     const row = await dashboardDB.queryRow<{
       id: number;

@@ -11,7 +11,7 @@ interface UpdateGroupParams extends UpdateGroupRequest {
 export const update = api<UpdateGroupParams, Group>(
   { expose: true, method: "PUT", path: "/groups/:id" },
   async (params) => {
-    await requireAdmin(params.authorization);
+    await requireAdmin(params?.authorization);
 
     const updates: string[] = [];
     const values: any[] = [];
