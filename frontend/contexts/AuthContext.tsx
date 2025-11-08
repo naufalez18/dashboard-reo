@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import backend from "@/backend-client";
+import backend from "~backend/client";
 import type { User } from "~backend/auth/types";
 import type { CreateDashboardRequest, UpdateDashboardRequest } from "~backend/dashboard/types";
 
