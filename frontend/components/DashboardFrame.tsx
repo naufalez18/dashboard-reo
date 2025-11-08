@@ -1,23 +1,29 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Dashboard } from "~backend/dashboard/types";
 import { Button } from "@/components/ui/button";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { Maximize2, Minimize2, Loader2 } from "lucide-react";
 
 export default function DashboardFrame({
   dashboard,
   isActive,
-  isKioskMode,               // ✅ tambahan prop
+  isKioskMode,
   className = "",
 }: {
   dashboard: Dashboard;
   isActive: boolean;
-  isKioskMode?: boolean;     // ✅ tambahkan tipe prop
+  isKioskMode?: boolean;
   className?: string;
 }) {
   const [interactMode, setInteractMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const src = useMemo(() => dashboard?.url || "about:blank", [dashboard?.url]);
+
+  useEffect(() => {
+    setIsLoading(true);
+  }, [dashboard?.id]);
 
   useEffect(() => {
     if (!interactMode) {
@@ -51,12 +57,22 @@ export default function DashboardFrame({
 
   return (
     <div className={`relative w-full h-full ${className}`} aria-live="polite">
+      {isLoading && isActive && (
+        <div className="absolute inset-0 z-20 bg-white flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+            <div className="text-lg text-slate-700 font-medium">Loading {dashboard?.name}...</div>
+          </div>
+        </div>
+      )}
       <iframe
+        ref={iframeRef}
         key={dashboard?.id ?? "iframe"}
         title={dashboard?.name ?? "Dashboard"}
         src={src}
         className={`absolute inset-0 w-full h-full border-0 ${isActive ? "opacity-100" : "opacity-0"}`}
         allowFullScreen
+        onLoad={() => setIsLoading(false)}
       />
 
       {/* ✅ Tombol hanya tampil saat kiosk mode aktif */}
