@@ -6,7 +6,7 @@ interface LogoutRequest {
 }
 
 export const logout = api<LogoutRequest, void>(
-  { expose: true, method: "POST", path: "/auth/logout" },
+  { expose: true, auth: false, method: "POST", path: "/auth/logout" },
   async (req) => {
     console.log(`Logout called for token: ${req.token.substring(0, 8)}...`);
     

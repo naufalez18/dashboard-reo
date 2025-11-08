@@ -12,7 +12,7 @@ interface VerifyTokenResponse {
 }
 
 export const verifyToken = api<VerifyTokenRequest, VerifyTokenResponse>(
-  { expose: true, method: "POST", path: "/auth/verify" },
+  { expose: true, auth: false, method: "POST", path: "/auth/verify" },
   async (req) => {
     console.log(`Verify token called with token: ${req.token.substring(0, 8)}...`);
     

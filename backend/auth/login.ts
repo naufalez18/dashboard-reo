@@ -5,7 +5,7 @@ import { createSession } from "./session";
 import type { LoginRequest, LoginResponse, User } from "./types";
 
 export const login = api<LoginRequest, LoginResponse>(
-  { expose: true, method: "POST", path: "/auth/login" },
+  { expose: true, auth: false, method: "POST", path: "/auth/login" },
   async (req) => {
     console.log(`Login attempt for username: ${req.username}`);
     
