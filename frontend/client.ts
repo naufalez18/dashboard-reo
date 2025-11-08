@@ -194,6 +194,7 @@ import { deleteDashboard as api_dashboard_delete_deleteDashboard } from "~backen
 import { list as api_dashboard_list_list } from "~backend/dashboard/list";
 import { listActive as api_dashboard_list_active_listActive } from "~backend/dashboard/list_active";
 import { listByUser as api_dashboard_list_by_user_listByUser } from "~backend/dashboard/list_by_user";
+import { reorder as api_dashboard_reorder_reorder } from "~backend/dashboard/reorder";
 import { update as api_dashboard_update_update } from "~backend/dashboard/update";
 
 export namespace dashboard {
@@ -208,6 +209,7 @@ export namespace dashboard {
             this.list = this.list.bind(this)
             this.listActive = this.listActive.bind(this)
             this.listByUser = this.listByUser.bind(this)
+            this.reorder = this.reorder.bind(this)
             this.update = this.update.bind(this)
         }
 
@@ -270,6 +272,22 @@ export namespace dashboard {
             // Now make the actual call to the API
             const resp = await this.baseClient.callTypedAPI(`/dashboards/my-dashboards`, {headers, method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_dashboard_list_by_user_listByUser>
+        }
+
+        public async reorder(params: RequestType<typeof api_dashboard_reorder_reorder>): Promise<ResponseType<typeof api_dashboard_reorder_reorder>> {
+            // Convert our params into the objects we need for the request
+            const headers = makeRecord<string, string>({
+                authorization: params.authorization,
+            })
+
+            // Construct the body with only the fields which we want encoded within the body (excluding query string or header fields)
+            const body: Record<string, any> = {
+                newSortOrder: params.newSortOrder,
+            }
+
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/dashboards/${encodeURIComponent(params.id)}/reorder`, {headers, method: "POST", body: JSON.stringify(body)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_dashboard_reorder_reorder>
         }
 
         public async update(params: RequestType<typeof api_dashboard_update_update>): Promise<ResponseType<typeof api_dashboard_update_update>> {

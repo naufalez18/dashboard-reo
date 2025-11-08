@@ -1,95 +1,41 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Monitor, ArrowLeft, Eye, EyeOff, LogOut, User, Shield, Users, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Pagination } from "./Pagination";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "../contexts/AuthContext";
 import type { Dashboard } from "~backend/dashboard/types";
 import DashboardForm from "./DashboardForm";
 import { UserManagement } from "./UserManagement";
 import { GroupManagement } from "./GroupManagement";
+import { useDashboards, useToggleDashboard, useReorderDashboard, useDeleteDashboard } from "../hooks/useDashboards";
 
 type TabView = "dashboards" | "users" | "groups";
+
+const ITEMS_PER_PAGE = 10;
 
 export default function AdminPanel() {
   const [editingDashboard, setEditingDashboard] = useState<Dashboard | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState<TabView>("dashboards");
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { user, logout, getAuthenticatedBackend } = useAuth();
+  const { user, logout } = useAuth();
 
-  const backend = getAuthenticatedBackend();
-
-  const { data: dashboardsData, isLoading } = useQuery({
-    queryKey: ["dashboards"],
-    queryFn: async () => {
-      try {
-        return await backend.dashboard.list();
-      } catch (err) {
-        console.error("Failed to fetch dashboards:", err);
-        throw err;
-      }
-    },
+  const { data: dashboardsData, isLoading } = useDashboards({
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      try {
-        await backend.dashboard.deleteDashboard({ id });
-      } catch (err) {
-        console.error("Failed to delete dashboard:", err);
-        throw err;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dashboards"] });
-      queryClient.invalidateQueries({ queryKey: ["active-dashboards"], exact: false });
-      toast({
-        title: "Success",
-        description: "Dashboard deleted successfully",
-      });
-    },
-    onError: (error) => {
-      console.error("Delete error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete dashboard",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async (dashboard: Partial<Dashboard> & { id: number }) => {
-      try {
-        return await backend.dashboard.update(dashboard);
-      } catch (err) {
-        console.error("Failed to update dashboard:", err);
-        throw err;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dashboards"] });
-      queryClient.invalidateQueries({ queryKey: ["active-dashboards"], exact: false });
-      toast({
-        title: "Success",
-        description: "Dashboard updated successfully",
-      });
-    },
-    onError: (error) => {
-      console.error("Update error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update dashboard",
-        variant: "destructive",
-      });
-    },
-  });
+  const toggleMutation = useToggleDashboard();
+  const reorderMutation = useReorderDashboard();
+  const deleteMutation = useDeleteDashboard();
 
   const dashboards = dashboardsData?.dashboards || [];
+  const totalPages = dashboardsData?.totalPages || 1;
+  const totalDashboards = dashboardsData?.total || 0;
 
   const handleEdit = (dashboard: Dashboard) => {
     setEditingDashboard(dashboard);
@@ -98,43 +44,83 @@ export default function AdminPanel() {
 
   const handleDelete = async (id: number) => {
     if (confirm("Are you sure you want to delete this dashboard?")) {
-      deleteMutation.mutate(id);
+      try {
+        await deleteMutation.mutateAsync(id);
+        toast({
+          title: "Success",
+          description: "Dashboard deleted successfully",
+        });
+      } catch (error) {
+        console.error("Delete error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to delete dashboard",
+          variant: "destructive",
+        });
+      }
     }
   };
 
   const handleToggleActive = async (dashboard: Dashboard) => {
-    updateMutation.mutate({
-      id: dashboard.id,
-      isActive: !dashboard.isActive,
-    });
+    try {
+      await toggleMutation.mutateAsync(dashboard);
+      toast({
+        title: "Success",
+        description: `Dashboard ${dashboard.isActive ? "deactivated" : "activated"} successfully`,
+      });
+    } catch (error) {
+      console.error("Toggle error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update dashboard",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleMoveUp = async (dashboard: Dashboard, index: number) => {
-    if (index === 0) return;
-    
-    const prevDashboard = dashboards[index - 1];
-    updateMutation.mutate({
-      id: dashboard.id,
-      sortOrder: prevDashboard.sortOrder,
-    });
-    updateMutation.mutate({
-      id: prevDashboard.id,
-      sortOrder: dashboard.sortOrder,
-    });
+    if (index === 0 && currentPage === 1) return;
+
+    const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
+    const newSortOrder = globalIndex - 1;
+
+    try {
+      await reorderMutation.mutateAsync({
+        id: dashboard.id,
+        newSortOrder,
+      });
+    } catch (error) {
+      console.error("Reorder error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to reorder dashboard",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleMoveDown = async (dashboard: Dashboard, index: number) => {
-    if (index === dashboards.length - 1) return;
+    const isLastOnPage = index === dashboards.length - 1;
+    const isLastOverall = currentPage === totalPages && isLastOnPage;
     
-    const nextDashboard = dashboards[index + 1];
-    updateMutation.mutate({
-      id: dashboard.id,
-      sortOrder: nextDashboard.sortOrder,
-    });
-    updateMutation.mutate({
-      id: nextDashboard.id,
-      sortOrder: dashboard.sortOrder,
-    });
+    if (isLastOverall) return;
+
+    const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
+    const newSortOrder = globalIndex + 1;
+
+    try {
+      await reorderMutation.mutateAsync({
+        id: dashboard.id,
+        newSortOrder,
+      });
+    } catch (error) {
+      console.error("Reorder error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to reorder dashboard",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleFormClose = () => {
@@ -165,7 +151,6 @@ export default function AdminPanel() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Button asChild variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50">
@@ -180,7 +165,6 @@ export default function AdminPanel() {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            {/* User Info */}
             <div className="flex items-center space-x-3 bg-white rounded-lg px-4 py-2 border border-slate-200 shadow-sm">
               <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                 {user?.role === "admin" ? (
@@ -212,7 +196,6 @@ export default function AdminPanel() {
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="flex space-x-2 mb-6">
           <Button
             onClick={() => setActiveTab("dashboards")}
@@ -240,13 +223,11 @@ export default function AdminPanel() {
           </Button>
         </div>
 
-        {/* Tab Content */}
         {activeTab === "users" && <UserManagement />}
         {activeTab === "groups" && <GroupManagement />}
         
         {activeTab === "dashboards" && (
           <>
-        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="bg-white shadow-sm border-slate-200">
             <CardContent className="p-6">
@@ -256,7 +237,7 @@ export default function AdminPanel() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-600">Total Dashboards</p>
-                  <p className="text-2xl font-bold text-slate-900">{dashboards.length}</p>
+                  <p className="text-2xl font-bold text-slate-900">{totalDashboards}</p>
                 </div>
               </div>
             </CardContent>
@@ -309,8 +290,7 @@ export default function AdminPanel() {
           </Card>
         </div>
 
-        {/* Sample Data Notice */}
-        {dashboards.length > 10 && (
+        {totalDashboards > 10 && (
           <Card className="mb-6 bg-blue-50 border-blue-200">
             <CardContent className="p-4">
               <div className="flex items-center">
@@ -320,7 +300,7 @@ export default function AdminPanel() {
                 <div>
                   <p className="text-sm font-medium text-blue-800">Sample Power BI Dashboards Loaded</p>
                   <p className="text-xs text-blue-600">
-                    {dashboards.length} sample dashboards have been added for demonstration. 
+                    {totalDashboards} sample dashboards have been added for demonstration. 
                     Replace the URLs with your actual Power BI dashboard links.
                   </p>
                 </div>
@@ -329,14 +309,13 @@ export default function AdminPanel() {
           </Card>
         )}
 
-        {/* Dashboard List */}
         <Card className="bg-white shadow-sm border-slate-200">
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-slate-900">
               <span>Dashboards</span>
-              {dashboards.length > 0 && (
+              {totalDashboards > 0 && (
                 <Badge variant="outline" className="border-slate-300 text-slate-700">
-                  {activeDashboards.length} active of {dashboards.length} total
+                  {activeDashboards.length} active of {totalDashboards} total
                 </Badge>
               )}
             </CardTitle>
@@ -347,7 +326,7 @@ export default function AdminPanel() {
                 <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                 <div className="text-slate-600">Loading dashboards...</div>
               </div>
-            ) : dashboards.length === 0 ? (
+            ) : totalDashboards === 0 ? (
               <div className="text-center py-8">
                 <Monitor className="w-12 h-12 text-slate-400 mx-auto mb-4" />
                 <p className="text-slate-600 mb-4">No dashboards configured</p>
@@ -357,95 +336,109 @@ export default function AdminPanel() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
-                {dashboards.map((dashboard: Dashboard, index: number) => (
-                  <div
-                    key={dashboard.id}
-                    className={`flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors ${
-                      !dashboard.isActive ? 'opacity-60' : ''
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="font-semibold text-slate-900 truncate">{dashboard.name}</h3>
-                        <Badge variant={dashboard.isActive ? "default" : "secondary"} className={
-                          dashboard.isActive 
-                            ? "bg-emerald-100 text-emerald-800 border-emerald-200" 
-                            : "bg-slate-100 text-slate-600 border-slate-200"
-                        }>
-                          {dashboard.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                        <Badge variant="outline" className="border-slate-300 text-slate-700">
-                          {dashboard.displayDuration}s
-                        </Badge>
-                        <Badge variant="outline" className="text-xs border-slate-300 text-slate-600">
-                          #{dashboard.sortOrder}
-                        </Badge>
+              <>
+                <div className="space-y-4 mb-6">
+                  {dashboards.map((dashboard: Dashboard, index: number) => (
+                    <div
+                      key={dashboard.id}
+                      className={`flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-all ${
+                        !dashboard.isActive ? 'opacity-60' : ''
+                      } ${
+                        toggleMutation.isPending || reorderMutation.isPending 
+                          ? 'transition-all duration-200' 
+                          : ''
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="font-semibold text-slate-900 truncate">{dashboard.name}</h3>
+                          <Badge variant={dashboard.isActive ? "default" : "secondary"} className={
+                            dashboard.isActive 
+                              ? "bg-emerald-100 text-emerald-800 border-emerald-200" 
+                              : "bg-slate-100 text-slate-600 border-slate-200"
+                          }>
+                            {dashboard.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                          <Badge variant="outline" className="border-slate-300 text-slate-700">
+                            {dashboard.displayDuration}s
+                          </Badge>
+                          <Badge variant="outline" className="text-xs border-slate-300 text-slate-600">
+                            #{dashboard.sortOrder}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-slate-600 truncate max-w-2xl">
+                          {dashboard.url}
+                        </p>
                       </div>
-                      <p className="text-sm text-slate-600 truncate max-w-2xl">
-                        {dashboard.url}
-                      </p>
+                      
+                      <div className="flex items-center space-x-2 ml-4">
+                        <Button
+                          onClick={() => handleMoveUp(dashboard, index)}
+                          disabled={index === 0 && currentPage === 1}
+                          size="sm"
+                          variant="outline"
+                          className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                          title="Move up"
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </Button>
+                        
+                        <Button
+                          onClick={() => handleMoveDown(dashboard, index)}
+                          disabled={currentPage === totalPages && index === dashboards.length - 1}
+                          size="sm"
+                          variant="outline"
+                          className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                          title="Move down"
+                        >
+                          <ArrowDown className="w-4 h-4" />
+                        </Button>
+                        
+                        <Button
+                          onClick={() => handleToggleActive(dashboard)}
+                          size="sm"
+                          variant={dashboard.isActive ? "secondary" : "default"}
+                          className={dashboard.isActive 
+                            ? "bg-slate-100 text-slate-600 hover:bg-slate-200" 
+                            : "bg-emerald-600 text-white hover:bg-emerald-700"
+                          }
+                          title={dashboard.isActive ? "Deactivate" : "Activate"}
+                        >
+                          {dashboard.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </Button>
+                        
+                        <Button
+                          onClick={() => handleEdit(dashboard)}
+                          size="sm"
+                          variant="outline"
+                          className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                          title="Edit"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        
+                        <Button
+                          onClick={() => handleDelete(dashboard.id)}
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                    
-                    <div className="flex items-center space-x-2 ml-4">
-                      <Button
-                        onClick={() => handleMoveUp(dashboard, index)}
-                        disabled={index === 0}
-                        size="sm"
-                        variant="outline"
-                        className="border-slate-300 text-slate-700 hover:bg-slate-50"
-                        title="Move up"
-                      >
-                        <ArrowUp className="w-4 h-4" />
-                      </Button>
-                      
-                      <Button
-                        onClick={() => handleMoveDown(dashboard, index)}
-                        disabled={index === dashboards.length - 1}
-                        size="sm"
-                        variant="outline"
-                        className="border-slate-300 text-slate-700 hover:bg-slate-50"
-                        title="Move down"
-                      >
-                        <ArrowDown className="w-4 h-4" />
-                      </Button>
-                      
-                      <Button
-                        onClick={() => handleToggleActive(dashboard)}
-                        size="sm"
-                        variant={dashboard.isActive ? "secondary" : "default"}
-                        className={dashboard.isActive 
-                          ? "bg-slate-100 text-slate-600 hover:bg-slate-200" 
-                          : "bg-emerald-600 text-white hover:bg-emerald-700"
-                        }
-                        title={dashboard.isActive ? "Deactivate" : "Activate"}
-                      >
-                        {dashboard.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </Button>
-                      
-                      <Button
-                        onClick={() => handleEdit(dashboard)}
-                        size="sm"
-                        variant="outline"
-                        className="border-slate-300 text-slate-700 hover:bg-slate-50"
-                        title="Edit"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      
-                      <Button
-                        onClick={() => handleDelete(dashboard.id)}
-                        size="sm"
-                        variant="outline"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                )}
+              </>
             )}
           </CardContent>
         </Card>
