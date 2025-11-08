@@ -46,7 +46,7 @@ export default function AdminPanel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dashboards"] });
-      queryClient.invalidateQueries({ queryKey: ["active-dashboards"] });
+      queryClient.invalidateQueries({ queryKey: ["active-dashboards"], exact: false });
       toast({
         title: "Success",
         description: "Dashboard deleted successfully",
@@ -73,7 +73,7 @@ export default function AdminPanel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dashboards"] });
-      queryClient.invalidateQueries({ queryKey: ["active-dashboards"] });
+      queryClient.invalidateQueries({ queryKey: ["active-dashboards"], exact: false });
       toast({
         title: "Success",
         description: "Dashboard updated successfully",

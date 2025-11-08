@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import backend from "~backend/client";
 import type { User } from "~backend/auth/types";
 import type { CreateDashboardRequest, UpdateDashboardRequest } from "~backend/dashboard/types";
@@ -27,6 +28,7 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -102,6 +104,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error("Backend logout failed:", error);
       }
     }
+    
+    queryClient.clear();
     
     setToken(null);
     setUser(null);

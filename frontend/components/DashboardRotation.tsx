@@ -114,7 +114,7 @@ export default function DashboardRotation() {
   const api = getAuthenticatedBackend();
 
   const { data: dashboardsData, isLoading, error, refetch } = useQuery({
-    queryKey: ["active-dashboards"],
+    queryKey: ["active-dashboards", user?.id, user?.groupId],
     queryFn: async () => {
       try {
         const svc: any = (api as any).dashboard;
