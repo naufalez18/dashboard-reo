@@ -1,1 +1,1 @@
-ALTER TABLE public.users ADD COLUMN group_id BIGINT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS group_id BIGINT;
