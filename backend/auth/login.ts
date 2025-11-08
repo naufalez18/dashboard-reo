@@ -21,14 +21,10 @@ export const login = api<LoginRequest, LoginResponse>(
       username: string;
       password_hash: string;
       role: "admin" | "viewer";
-      group_id: number | null;
-      group_name: string | null;
     }>`
-      SELECT u.id, u.username, u.password_hash, u.role, ug.group_id, dg.name as group_name
-      FROM users u
-      LEFT JOIN user_groups ug ON u.id = ug.user_id
-      LEFT JOIN dashboard_groups dg ON ug.group_id = dg.id
-      WHERE u.username = ${username}
+      SELECT id, username, password_hash, role
+      FROM users
+      WHERE username = ${username}
     `;
 
     if (!row) {
@@ -46,8 +42,6 @@ export const login = api<LoginRequest, LoginResponse>(
       id: row.id,
       username: row.username,
       role: row.role,
-      groupId: row.group_id || undefined,
-      groupName: row.group_name || undefined,
     };
 
     const sessionId = await createSession(row.id, row.username, row.role);
