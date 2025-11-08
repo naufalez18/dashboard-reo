@@ -4,6 +4,7 @@ function getBackendURL(): string {
   }
 
   const hostname = window.location.hostname;
+  const origin = window.location.origin;
   console.log('Detecting backend URL for hostname:', hostname);
 
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
@@ -12,28 +13,8 @@ function getBackendURL(): string {
     return url;
   }
 
-  if (hostname.endsWith('.lp.dev')) {
-    const appId = hostname.replace('.lp.dev', '');
-    const url = `https://${appId}.api.lp.dev`;
-    console.log('Using .lp.dev backend:', url);
-    return url;
-  }
-
-  if (hostname.includes('.frontend.encr.app')) {
-    const envApp = hostname.replace('.frontend.encr.app', '');
-    const url = `https://${envApp}.encr.app`;
-    console.log('Using .encr.app backend:', url);
-    return url;
-  }
-
-  if (hostname.endsWith('.encr.app')) {
-    const url = `https://${hostname}`;
-    console.log('Using .encr.app backend (direct):', url);
-    return url;
-  }
-
-  console.warn(`Unknown hostname pattern: ${hostname}, trying same-origin`);
-  return window.location.origin;
+  console.log('Using same origin for backend (no CORS):', origin);
+  return origin;
 }
 
 export const BACKEND_URL = getBackendURL();
