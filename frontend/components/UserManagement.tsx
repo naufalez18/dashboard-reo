@@ -6,7 +6,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useToast } from "./ui/use-toast";
 import { Badge } from "./ui/badge";
-import backend from "~backend/client";
+import backend from "@/backend-client";
 import type { User } from "~backend/auth/types";
 import type { Group } from "~backend/group/types";
 
@@ -88,7 +88,7 @@ export function UserManagement() {
       } else {
         await backend.auth.createUser({
           ...formData,
-          groupId: formData.groupId || null,
+          groupId: formData.groupId || undefined,
           authorization: `Bearer ${token}`,
         });
 

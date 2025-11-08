@@ -6,7 +6,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { useToast } from "./ui/use-toast";
-import backend from "~backend/client";
+import backend from "@/backend-client";
 import type { Group } from "~backend/group/types";
 import type { Dashboard } from "~backend/dashboard/types";
 
