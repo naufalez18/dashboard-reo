@@ -13,7 +13,7 @@ export const list = api(
       updated_at: Date;
     }>`
       SELECT id, name, description, created_at, updated_at
-      FROM groups
+      FROM dashboard_groups
       ORDER BY name ASC
     `;
 

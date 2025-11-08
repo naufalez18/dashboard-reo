@@ -24,9 +24,10 @@ export const login = api<LoginRequest, LoginResponse>(
       group_id: number | null;
       group_name: string | null;
     }>`
-      SELECT u.id, u.username, u.password_hash, u.role, u.group_id, g.name as group_name
+      SELECT u.id, u.username, u.password_hash, u.role, ug.group_id, dg.name as group_name
       FROM users u
-      LEFT JOIN groups g ON u.group_id = g.id
+      LEFT JOIN user_groups ug ON u.id = ug.user_id
+      LEFT JOIN dashboard_groups dg ON ug.group_id = dg.id
       WHERE u.username = ${username}
     `;
 

@@ -31,22 +31,29 @@ export const createUser = api<CreateUserParams, User>(
       id: number;
       username: string;
       role: "admin" | "viewer";
-      group_id: number | null;
     }>`
-      INSERT INTO users (username, password_hash, role, group_id)
-      VALUES (${params.username}, ${hashedPassword}, ${params.role}, ${params.groupId || null})
-      RETURNING id, username, role, group_id
+      INSERT INTO users (username, password_hash, role)
+      VALUES (${params.username}, ${hashedPassword}, ${params.role})
+      RETURNING id, username, role
     `;
 
     if (!user) {
       throw APIError.internal("Failed to create user");
     }
 
+    let groupId: number | undefined;
     let groupName: string | undefined;
-    if (user.group_id) {
-      const group = await authDB.queryRow<{ name: string }>`
-        SELECT name FROM groups WHERE id = ${user.group_id}
+    
+    if (params.groupId) {
+      await authDB.exec`
+        INSERT INTO user_groups (user_id, group_id, created_at)
+        VALUES (${user.id}, ${params.groupId}, NOW())
       `;
+      
+      const group = await authDB.queryRow<{ name: string }>`
+        SELECT name FROM dashboard_groups WHERE id = ${params.groupId}
+      `;
+      groupId = params.groupId;
       groupName = group?.name;
     }
 
@@ -54,7 +61,7 @@ export const createUser = api<CreateUserParams, User>(
       id: user.id,
       username: user.username,
       role: user.role,
-      groupId: user.group_id || undefined,
+      groupId,
       groupName,
     };
   }

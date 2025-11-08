@@ -20,7 +20,7 @@ export const create = api<CreateGroupParams, Group>(
       created_at: Date;
       updated_at: Date;
     }>`
-      INSERT INTO groups (name, description)
+      INSERT INTO dashboard_groups (name, description)
       VALUES (${params.name}, ${params.description || null})
       RETURNING id, name, description, created_at, updated_at
     `;

@@ -21,7 +21,10 @@ export async function requireAuth(authHeader?: string): Promise<AuthData> {
   const userDetails = await authDB.queryRow<{
     group_id: number | null;
   }>`
-    SELECT group_id FROM users WHERE id = ${session.userId}
+    SELECT ug.group_id
+    FROM users u
+    LEFT JOIN user_groups ug ON u.id = ug.user_id
+    WHERE u.id = ${session.userId}
   `;
 
   return {

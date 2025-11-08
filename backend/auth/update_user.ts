@@ -30,48 +30,82 @@ export const updateUser = api<UpdateUserParams, User>(
       updates.push(`role = $${paramIndex++}`);
       values.push(params.role);
     }
-    if (params.groupId !== undefined) {
-      updates.push(`group_id = $${paramIndex++}`);
-      values.push(params.groupId || null);
-    }
 
-    if (updates.length === 0) {
-      throw APIError.invalidArgument("No fields to update");
-    }
+    let user;
+    if (updates.length > 0) {
+      values.push(params.id);
 
-    values.push(params.id);
-
-    const query = `
-      UPDATE users 
-      SET ${updates.join(", ")}
-      WHERE id = $${paramIndex}
-      RETURNING id, username, role, group_id
-    `;
-
-    const user = await authDB.rawQueryRow<{
-      id: number;
-      username: string;
-      role: "admin" | "viewer";
-      group_id: number | null;
-    }>(query, ...values);
-
-    if (!user) {
-      throw APIError.notFound("User not found");
-    }
-
-    let groupName: string | undefined;
-    if (user.group_id) {
-      const group = await authDB.queryRow<{ name: string }>`
-        SELECT name FROM groups WHERE id = ${user.group_id}
+      const query = `
+        UPDATE users 
+        SET ${updates.join(", ")}
+        WHERE id = $${paramIndex}
+        RETURNING id, username, role
       `;
-      groupName = group?.name;
+
+      user = await authDB.rawQueryRow<{
+        id: number;
+        username: string;
+        role: "admin" | "viewer";
+      }>(query, ...values);
+
+      if (!user) {
+        throw APIError.notFound("User not found");
+      }
+    } else if (params.groupId === undefined) {
+      throw APIError.invalidArgument("No fields to update");
+    } else {
+      user = await authDB.queryRow<{
+        id: number;
+        username: string;
+        role: "admin" | "viewer";
+      }>`
+        SELECT id, username, role FROM users WHERE id = ${params.id}
+      `;
+      
+      if (!user) {
+        throw APIError.notFound("User not found");
+      }
+    }
+
+    let groupId: number | undefined;
+    let groupName: string | undefined;
+    
+    if (params.groupId !== undefined) {
+      await authDB.exec`
+        DELETE FROM user_groups WHERE user_id = ${params.id}
+      `;
+      
+      if (params.groupId !== null) {
+        await authDB.exec`
+          INSERT INTO user_groups (user_id, group_id, created_at)
+          VALUES (${params.id}, ${params.groupId}, NOW())
+        `;
+        
+        const group = await authDB.queryRow<{ name: string }>`
+          SELECT name FROM dashboard_groups WHERE id = ${params.groupId}
+        `;
+        groupId = params.groupId;
+        groupName = group?.name;
+      }
+    } else {
+      const userGroup = await authDB.queryRow<{ group_id: number }>`
+        SELECT group_id FROM user_groups WHERE user_id = ${params.id}
+      `;
+      
+      if (userGroup) {
+        groupId = userGroup.group_id;
+        const group = await authDB.queryRow<{ name: string }>`
+          SELECT name FROM dashboard_groups WHERE id = ${userGroup.group_id}
+        `;
+        groupName = group?.name;
+      }
     }
 
     return {
       id: user.id,
       username: user.username,
       role: user.role,
-      groupId: user.group_id || undefined,
+      groupId,
       groupName,
     };
   }
