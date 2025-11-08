@@ -80,7 +80,7 @@ export default function LoginPage() {
             <Monitor className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">ECO Dashboard Monitoring</h1>
-          <p className="text-blue-200">Electronic Channel Operations Group</p>
+          <p className="text-blue-200"><i>Driving Operational Excellence Through Analytics</i></p>
         </div>
 
         {/* Login Form */}
