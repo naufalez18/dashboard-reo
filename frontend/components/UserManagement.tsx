@@ -31,11 +31,8 @@ export function UserManagement() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("/api/users", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      setUsers(data.users);
+      const response = await backend.auth.listUsers({ authorization: `Bearer ${token}` });
+      setUsers(response.users);
     } catch (error) {
       console.error("Failed to fetch users:", error);
       toast({
@@ -72,38 +69,27 @@ export function UserManagement() {
     try {
       if (selectedUser) {
         const updateData: any = {
+          id: selectedUser.id,
           username: formData.username,
           role: formData.role,
           groupId: formData.groupId || null,
+          authorization: `Bearer ${token}`,
         };
         if (formData.password) {
           updateData.password = formData.password;
         }
 
-        await fetch(`/api/users/${selectedUser.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(updateData),
-        });
+        await backend.auth.updateUser(updateData);
 
         toast({
           title: "Success",
           description: "User updated successfully",
         });
       } else {
-        await fetch("/api/users", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            ...formData,
-            groupId: formData.groupId || null,
-          }),
+        await backend.auth.createUser({
+          ...formData,
+          groupId: formData.groupId || null,
+          authorization: `Bearer ${token}`,
         });
 
         toast({
@@ -131,10 +117,7 @@ export function UserManagement() {
     if (!confirm("Are you sure you want to delete this user?")) return;
 
     try {
-      await fetch(`/api/users/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await backend.auth.deleteUser({ id, authorization: `Bearer ${token}` });
 
       toast({
         title: "Success",
