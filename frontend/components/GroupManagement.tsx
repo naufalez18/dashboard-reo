@@ -41,7 +41,7 @@ export function GroupManagement() {
 
   const fetchDashboards = async () => {
     try {
-      const response = await backend.dashboard.list();
+      const response = await backend.dashboard.list({ authorization: undefined });
       setDashboards(response.dashboards);
     } catch (error) {
       console.error("Failed to fetch dashboards:", error);

@@ -239,15 +239,25 @@ export namespace dashboard {
             await this.baseClient.callTypedAPI(`/dashboards/${encodeURIComponent(params.id)}`, {headers, method: "DELETE", body: undefined})
         }
 
-        public async list(): Promise<ResponseType<typeof api_dashboard_list_list>> {
+        public async list(params: RequestType<typeof api_dashboard_list_list>): Promise<ResponseType<typeof api_dashboard_list_list>> {
+            // Convert our params into the objects we need for the request
+            const headers = makeRecord<string, string>({
+                authorization: params.authorization,
+            })
+
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/dashboards`, {method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/dashboards`, {headers, method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_dashboard_list_list>
         }
 
-        public async listActive(): Promise<ResponseType<typeof api_dashboard_list_active_listActive>> {
+        public async listActive(params: RequestType<typeof api_dashboard_list_active_listActive>): Promise<ResponseType<typeof api_dashboard_list_active_listActive>> {
+            // Convert our params into the objects we need for the request
+            const headers = makeRecord<string, string>({
+                authorization: params.authorization,
+            })
+
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/dashboards/active`, {method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/dashboards/active`, {headers, method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_dashboard_list_active_listActive>
         }
 

@@ -27,13 +27,22 @@ export const createUser = api<CreateUserParams, User>(
 
     const hashedPassword = await bcrypt.hash(params.password, 10);
 
+    let finalGroupId = params.groupId;
+    
+    if (!finalGroupId) {
+      const defaultGroup = await authDB.queryRow<{ id: number }>`
+        SELECT id FROM groups WHERE name = 'Dashboard All'
+      `;
+      finalGroupId = defaultGroup?.id;
+    }
+
     const user = await authDB.queryRow<{
       id: number;
       username: string;
       role: "admin" | "viewer";
     }>`
       INSERT INTO users (username, password_hash, role, group_id)
-      VALUES (${params.username}, ${hashedPassword}, ${params.role}, ${params.groupId || null})
+      VALUES (${params.username}, ${hashedPassword}, ${params.role}, ${finalGroupId || null})
       RETURNING id, username, role
     `;
 
@@ -44,11 +53,11 @@ export const createUser = api<CreateUserParams, User>(
     let groupId: number | undefined;
     let groupName: string | undefined;
     
-    if (params.groupId) {
+    if (finalGroupId) {
       const group = await authDB.queryRow<{ name: string }>`
-        SELECT name FROM groups WHERE id = ${params.groupId}
+        SELECT name FROM groups WHERE id = ${finalGroupId}
       `;
-      groupId = params.groupId;
+      groupId = finalGroupId;
       groupName = group?.name;
     }
 
