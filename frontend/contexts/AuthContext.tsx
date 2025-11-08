@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import backend from "~backend/client";
-import { createAuthenticatedBackend } from "../lib/backend-client";
 import type { User } from "~backend/auth/types";
+import type { CreateDashboardRequest, UpdateDashboardRequest } from "~backend/dashboard/types";
 
 interface AuthContextType {
   user: User | null;
@@ -112,7 +112,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const getAuthenticatedBackend = () => {
-    return createAuthenticatedBackend(token);
+    if (!token) {
+      return backend;
+    }
+
+    return {
+      ...backend,
+      dashboard: {
+        list: backend.dashboard.list,
+        listActive: backend.dashboard.listActive,
+        listByUser: () => backend.dashboard.listByUser({ authorization: `Bearer ${token}` }),
+        create: (data: CreateDashboardRequest) => 
+          backend.dashboard.create({ ...data, authorization: `Bearer ${token}` }),
+        update: (data: UpdateDashboardRequest) => 
+          backend.dashboard.update({ ...data, authorization: `Bearer ${token}` }),
+        deleteDashboard: (data: { id: number }) => 
+          backend.dashboard.deleteDashboard({ ...data, authorization: `Bearer ${token}` }),
+      },
+    };
   };
 
   const value = {
