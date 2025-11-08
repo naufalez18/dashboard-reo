@@ -18,7 +18,7 @@ export const get = api<GetGroupParams, GroupWithDashboards>(
       updated_at: Date;
     }>`
       SELECT id, name, description, created_at, updated_at
-      FROM dashboard_groups
+      FROM groups
       WHERE id = ${params.id}
     `;
 

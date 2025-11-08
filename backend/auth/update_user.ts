@@ -30,6 +30,10 @@ export const updateUser = api<UpdateUserParams, User>(
       updates.push(`role = $${paramIndex++}`);
       values.push(params.role);
     }
+    if (params.groupId !== undefined) {
+      updates.push(`group_id = $${paramIndex++}`);
+      values.push(params.groupId);
+    }
 
     let user;
     if (updates.length > 0) {
@@ -51,8 +55,6 @@ export const updateUser = api<UpdateUserParams, User>(
       if (!user) {
         throw APIError.notFound("User not found");
       }
-    } else if (params.groupId === undefined) {
-      throw APIError.invalidArgument("No fields to update");
     } else {
       user = await authDB.queryRow<{
         id: number;
@@ -70,35 +72,16 @@ export const updateUser = api<UpdateUserParams, User>(
     let groupId: number | undefined;
     let groupName: string | undefined;
     
-    if (params.groupId !== undefined) {
-      await authDB.exec`
-        DELETE FROM user_groups WHERE user_id = ${params.id}
+    const userWithGroup = await authDB.queryRow<{ group_id: number | null }>`
+      SELECT group_id FROM users WHERE id = ${params.id}
+    `;
+    
+    if (userWithGroup?.group_id) {
+      groupId = userWithGroup.group_id;
+      const group = await authDB.queryRow<{ name: string }>`
+        SELECT name FROM groups WHERE id = ${userWithGroup.group_id}
       `;
-      
-      if (params.groupId !== null) {
-        await authDB.exec`
-          INSERT INTO user_groups (user_id, group_id, created_at)
-          VALUES (${params.id}, ${params.groupId}, NOW())
-        `;
-        
-        const group = await authDB.queryRow<{ name: string }>`
-          SELECT name FROM dashboard_groups WHERE id = ${params.groupId}
-        `;
-        groupId = params.groupId;
-        groupName = group?.name;
-      }
-    } else {
-      const userGroup = await authDB.queryRow<{ group_id: number }>`
-        SELECT group_id FROM user_groups WHERE user_id = ${params.id}
-      `;
-      
-      if (userGroup) {
-        groupId = userGroup.group_id;
-        const group = await authDB.queryRow<{ name: string }>`
-          SELECT name FROM dashboard_groups WHERE id = ${userGroup.group_id}
-        `;
-        groupName = group?.name;
-      }
+      groupName = group?.name;
     }
 
     return {

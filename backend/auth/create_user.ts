@@ -32,8 +32,8 @@ export const createUser = api<CreateUserParams, User>(
       username: string;
       role: "admin" | "viewer";
     }>`
-      INSERT INTO users (username, password_hash, role)
-      VALUES (${params.username}, ${hashedPassword}, ${params.role})
+      INSERT INTO users (username, password_hash, role, group_id)
+      VALUES (${params.username}, ${hashedPassword}, ${params.role}, ${params.groupId || null})
       RETURNING id, username, role
     `;
 
@@ -45,13 +45,8 @@ export const createUser = api<CreateUserParams, User>(
     let groupName: string | undefined;
     
     if (params.groupId) {
-      await authDB.exec`
-        INSERT INTO user_groups (user_id, group_id, created_at)
-        VALUES (${user.id}, ${params.groupId}, NOW())
-      `;
-      
       const group = await authDB.queryRow<{ name: string }>`
-        SELECT name FROM dashboard_groups WHERE id = ${params.groupId}
+        SELECT name FROM groups WHERE id = ${params.groupId}
       `;
       groupId = params.groupId;
       groupName = group?.name;

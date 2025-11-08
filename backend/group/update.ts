@@ -36,7 +36,7 @@ export const update = api<UpdateGroupParams, Group>(
       values.push(params.id);
 
       const query = `
-        UPDATE dashboard_groups 
+        UPDATE groups 
         SET ${updates.join(", ")}
         WHERE id = $${paramIndex}
         RETURNING id, name, description, created_at, updated_at
@@ -62,7 +62,7 @@ export const update = api<UpdateGroupParams, Group>(
         updated_at: Date;
       }>`
         SELECT id, name, description, created_at, updated_at
-        FROM dashboard_groups
+        FROM groups
         WHERE id = ${params.id}
       `;
 

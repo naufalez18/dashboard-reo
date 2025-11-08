@@ -19,7 +19,7 @@ export const deleteGroup = api<DeleteGroupParams, void>(
     `;
 
     const check = await authDB.queryRow<{ id: number }>`
-      SELECT id FROM dashboard_groups WHERE id = ${params.id}
+      SELECT id FROM groups WHERE id = ${params.id}
     `;
 
     if (!check) {
@@ -27,7 +27,7 @@ export const deleteGroup = api<DeleteGroupParams, void>(
     }
 
     await authDB.exec`
-      DELETE FROM dashboard_groups
+      DELETE FROM groups
       WHERE id = ${params.id}
     `;
   }

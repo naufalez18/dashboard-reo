@@ -19,10 +19,9 @@ export const listUsers = api<ListUsersParams, { users: User[] }>(
       group_id: number | null;
       group_name: string | null;
     }>`
-      SELECT u.id, u.username, u.role, ug.group_id, dg.name as group_name
+      SELECT u.id, u.username, u.role, u.group_id, g.name as group_name
       FROM users u
-      LEFT JOIN user_groups ug ON u.id = ug.user_id
-      LEFT JOIN dashboard_groups dg ON ug.group_id = dg.id
+      LEFT JOIN groups g ON u.group_id = g.id
       ORDER BY u.username ASC
     `;
 
