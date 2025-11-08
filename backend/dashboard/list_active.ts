@@ -25,7 +25,7 @@ export const listActive = api<ListActiveRequest, { dashboards: any[] }>(
       let groupId: number | undefined;
       let groupName: string | undefined;
 
-      if (req.authorization) {
+      if (req?.authorization) {
         const token = req.authorization.replace(/^Bearer /, "");
         const session = await getSession(token);
         
