@@ -96,12 +96,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = async () => {
     if (token) {
       try {
-        // Call backend logout to invalidate session
         await backend.auth.logout({ token });
         console.log("Backend logout successful");
       } catch (error) {
         console.error("Backend logout failed:", error);
-        // Continue with frontend logout even if backend fails
       }
     }
     
@@ -109,6 +107,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_user");
+    
+    window.location.reload();
   };
 
   const getAuthenticatedBackend = () => {
