@@ -118,9 +118,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     return {
       ...backend,
+      auth: {
+        ...backend.auth,
+        listUsers: () => backend.auth.listUsers({ authorization: `Bearer ${token}` }),
+        createUser: (data: any) => backend.auth.createUser({ ...data, authorization: `Bearer ${token}` }),
+        updateUser: (data: any) => backend.auth.updateUser({ ...data, authorization: `Bearer ${token}` }),
+        deleteUser: (data: { id: number }) => backend.auth.deleteUser({ ...data, authorization: `Bearer ${token}` }),
+      },
       dashboard: {
-        list: backend.dashboard.list,
-        listActive: backend.dashboard.listActive,
+        list: () => backend.dashboard.list({ authorization: `Bearer ${token}` }),
+        listActive: () => backend.dashboard.listActive({ authorization: `Bearer ${token}` }),
         listByUser: () => backend.dashboard.listByUser({ authorization: `Bearer ${token}` }),
         create: (data: CreateDashboardRequest) => 
           backend.dashboard.create({ ...data, authorization: `Bearer ${token}` }),
@@ -128,6 +135,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
           backend.dashboard.update({ ...data, authorization: `Bearer ${token}` }),
         deleteDashboard: (data: { id: number }) => 
           backend.dashboard.deleteDashboard({ ...data, authorization: `Bearer ${token}` }),
+      },
+      group: {
+        ...backend.group,
+        list: () => backend.group.list(),
+        get: (data: { id: number }) => backend.group.get(data),
+        create: (data: any) => backend.group.create({ ...data, authorization: `Bearer ${token}` }),
+        update: (data: any) => backend.group.update({ ...data, authorization: `Bearer ${token}` }),
+        deleteGroup: (data: { id: number }) => backend.group.deleteGroup({ ...data, authorization: `Bearer ${token}` }),
       },
     };
   };
