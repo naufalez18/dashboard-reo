@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Monitor, ArrowLeft, Eye, EyeOff, LogOut, User, Shield } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Monitor, ArrowLeft, Eye, EyeOff, LogOut, User, Shield, Users, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,10 +8,15 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "../contexts/AuthContext";
 import type { Dashboard } from "~backend/dashboard/types";
 import DashboardForm from "./DashboardForm";
+import { UserManagement } from "./UserManagement";
+import { GroupManagement } from "./GroupManagement";
+
+type TabView = "dashboards" | "users" | "groups";
 
 export default function AdminPanel() {
   const [editingDashboard, setEditingDashboard] = useState<Dashboard | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabView>("dashboards");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user, logout, getAuthenticatedBackend } = useAuth();
@@ -154,8 +159,8 @@ export default function AdminPanel() {
     );
   }
 
-  const activeDashboards = dashboards.filter(d => d.isActive);
-  const inactiveDashboards = dashboards.filter(d => !d.isActive);
+  const activeDashboards = dashboards.filter((d: Dashboard) => d.isActive);
+  const inactiveDashboards = dashboards.filter((d: Dashboard) => !d.isActive);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
@@ -193,10 +198,12 @@ export default function AdminPanel() {
               </Badge>
             </div>
             
-            <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Dashboard
-            </Button>
+            {activeTab === "dashboards" && (
+              <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Dashboard
+              </Button>
+            )}
             
             <Button onClick={handleLogout} variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50">
               <LogOut className="w-4 h-4 mr-2" />
@@ -205,6 +212,40 @@ export default function AdminPanel() {
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="flex space-x-2 mb-6">
+          <Button
+            onClick={() => setActiveTab("dashboards")}
+            variant={activeTab === "dashboards" ? "default" : "outline"}
+            className={activeTab === "dashboards" ? "bg-blue-600" : "border-slate-300"}
+          >
+            <Monitor className="w-4 h-4 mr-2" />
+            Dashboards
+          </Button>
+          <Button
+            onClick={() => setActiveTab("users")}
+            variant={activeTab === "users" ? "default" : "outline"}
+            className={activeTab === "users" ? "bg-blue-600" : "border-slate-300"}
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Users
+          </Button>
+          <Button
+            onClick={() => setActiveTab("groups")}
+            variant={activeTab === "groups" ? "default" : "outline"}
+            className={activeTab === "groups" ? "bg-blue-600" : "border-slate-300"}
+          >
+            <Layers className="w-4 h-4 mr-2" />
+            Groups
+          </Button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === "users" && <UserManagement />}
+        {activeTab === "groups" && <GroupManagement />}
+        
+        {activeTab === "dashboards" && (
+          <>
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="bg-white shadow-sm border-slate-200">
@@ -259,7 +300,7 @@ export default function AdminPanel() {
                   <p className="text-sm font-medium text-slate-600">Avg Duration</p>
                   <p className="text-2xl font-bold text-slate-900">
                     {activeDashboards.length > 0 
-                      ? Math.round(activeDashboards.reduce((sum, d) => sum + d.displayDuration, 0) / activeDashboards.length)
+                      ? Math.round(activeDashboards.reduce((sum: number, d: Dashboard) => sum + d.displayDuration, 0) / activeDashboards.length)
                       : 0}s
                   </p>
                 </div>
@@ -317,7 +358,7 @@ export default function AdminPanel() {
               </div>
             ) : (
               <div className="space-y-4">
-                {dashboards.map((dashboard, index) => (
+                {dashboards.map((dashboard: Dashboard, index: number) => (
                   <div
                     key={dashboard.id}
                     className={`flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors ${
@@ -408,6 +449,8 @@ export default function AdminPanel() {
             )}
           </CardContent>
         </Card>
+          </>
+        )}
       </div>
     </div>
   );

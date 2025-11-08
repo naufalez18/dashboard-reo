@@ -9,7 +9,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
-  getAuthenticatedBackend: () => typeof backend;
+  getAuthenticatedBackend: () => any;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

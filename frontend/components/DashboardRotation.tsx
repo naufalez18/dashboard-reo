@@ -118,6 +118,9 @@ export default function DashboardRotation() {
     queryFn: async () => {
       try {
         const svc: any = (api as any).dashboard;
+        if (svc && typeof svc.listByUser === "function") {
+          return await svc.listByUser();
+        }
         if (svc && typeof svc.listActive === "function") {
           return await svc.listActive();
         }

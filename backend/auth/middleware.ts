@@ -1,5 +1,6 @@
 import { APIError, Header } from "encore.dev/api";
 import { getSession } from "./session";
+import { authDB } from "./db";
 import type { AuthData } from "./types";
 
 export async function requireAuth(authHeader?: string): Promise<AuthData> {
@@ -17,10 +18,17 @@ export async function requireAuth(authHeader?: string): Promise<AuthData> {
     throw APIError.unauthenticated("Invalid or expired session");
   }
 
+  const userDetails = await authDB.queryRow<{
+    group_id: number | null;
+  }>`
+    SELECT group_id FROM users WHERE id = ${session.userId}
+  `;
+
   return {
     userID: String(session.userId),
     username: session.username,
     role: session.role as "admin" | "viewer",
+    groupId: userDetails?.group_id || undefined,
   };
 }
 

@@ -60,6 +60,21 @@ export function createAuthenticatedBackend(token: string | null) {
 
     list: backend.dashboard.list,
     listActive: backend.dashboard.listActive,
+    listByUser: async (): Promise<{ dashboards: Dashboard[] }> => {
+      const response = await fetch('/api/dashboards/my-dashboards', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Request failed' }));
+        throw new Error(error.message || 'Failed to fetch dashboards');
+      }
+
+      return response.json();
+    },
   };
 
   return {

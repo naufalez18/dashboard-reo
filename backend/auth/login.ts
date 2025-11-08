@@ -21,9 +21,14 @@ export const login = api<LoginRequest, LoginResponse>(
       username: string;
       password_hash: string;
       role: "admin" | "viewer";
-    }>`SELECT id, username, password_hash, role FROM users WHERE username = ${
-      username
-    }`;
+      group_id: number | null;
+      group_name: string | null;
+    }>`
+      SELECT u.id, u.username, u.password_hash, u.role, u.group_id, g.name as group_name
+      FROM users u
+      LEFT JOIN groups g ON u.group_id = g.id
+      WHERE u.username = ${username}
+    `;
 
     if (!row) {
       console.log(`Login failed: user ${username} not found`);
@@ -40,6 +45,8 @@ export const login = api<LoginRequest, LoginResponse>(
       id: row.id,
       username: row.username,
       role: row.role,
+      groupId: row.group_id || undefined,
+      groupName: row.group_name || undefined,
     };
 
     const sessionId = await createSession(row.id, row.username, row.role);
