@@ -157,7 +157,7 @@ export default function LoginPage() {
             </form>
 
             {/* Demo Accounts */}
-            <div className="mt-8 pt-6 border-t border-slate-200">
+						{/*<div className="mt-8 pt-6 border-t border-slate-200">
               <p className="text-sm text-slate-600 text-center mb-4 font-medium">Demo Accounts</p>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
@@ -210,7 +210,7 @@ export default function LoginPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </div>  */}
 
             {/* Features */}
             <div className="mt-6 pt-6 border-t border-slate-200">
