@@ -30,9 +30,9 @@ export const verifyToken = api<VerifyTokenRequest, VerifyTokenResponse>(
         group_id: number | null;
         group_name: string | null;
       }>`
-        SELECT u.group_id, dg.name as group_name
+        SELECT u.group_id, g.name as group_name
         FROM users u
-        LEFT JOIN dashboard_groups dg ON u.group_id = dg.id
+        LEFT JOIN groups g ON u.group_id = g.id
         WHERE u.id = ${session.userId}
       `;
       
