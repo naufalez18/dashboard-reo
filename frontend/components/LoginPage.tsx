@@ -79,7 +79,7 @@ export default function LoginPage() {
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <Monitor className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">REO Dashboard Monitoring</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">ECO Dashboard Monitoring</h1>
           <p className="text-blue-200">Electronic Channel Operations Group</p>
         </div>
 
