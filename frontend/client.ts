@@ -35,6 +35,7 @@ const BROWSER = typeof globalThis === "object" && ("window" in globalThis);
 export class Client {
     public readonly auth: auth.ServiceClient
     public readonly dashboard: dashboard.ServiceClient
+    public readonly group: group.ServiceClient
     private readonly options: ClientOptions
     private readonly target: string
 
@@ -51,6 +52,7 @@ export class Client {
         const base = new BaseClient(this.target, this.options)
         this.auth = new auth.ServiceClient(base)
         this.dashboard = new dashboard.ServiceClient(base)
+        this.group = new group.ServiceClient(base)
     }
 
     /**
@@ -84,8 +86,12 @@ export interface ClientOptions {
 /**
  * Import the endpoint handlers to derive the types for the client.
  */
+import { createUser as api_auth_create_user_createUser } from "~backend/auth/create_user";
+import { deleteUser as api_auth_delete_user_deleteUser } from "~backend/auth/delete_user";
+import { listUsers as api_auth_list_users_listUsers } from "~backend/auth/list_users";
 import { login as api_auth_login_login } from "~backend/auth/login";
 import { logout as api_auth_logout_logout } from "~backend/auth/logout";
+import { updateUser as api_auth_update_user_updateUser } from "~backend/auth/update_user";
 import { verifyToken as api_auth_verify_verifyToken } from "~backend/auth/verify";
 
 export namespace auth {
@@ -95,9 +101,52 @@ export namespace auth {
 
         constructor(baseClient: BaseClient) {
             this.baseClient = baseClient
+            this.createUser = this.createUser.bind(this)
+            this.deleteUser = this.deleteUser.bind(this)
+            this.listUsers = this.listUsers.bind(this)
             this.login = this.login.bind(this)
             this.logout = this.logout.bind(this)
+            this.updateUser = this.updateUser.bind(this)
             this.verifyToken = this.verifyToken.bind(this)
+        }
+
+        public async createUser(params: RequestType<typeof api_auth_create_user_createUser>): Promise<ResponseType<typeof api_auth_create_user_createUser>> {
+            // Convert our params into the objects we need for the request
+            const headers = makeRecord<string, string>({
+                authorization: params.authorization,
+            })
+
+            // Construct the body with only the fields which we want encoded within the body (excluding query string or header fields)
+            const body: Record<string, any> = {
+                groupId:  params.groupId,
+                password: params.password,
+                role:     params.role,
+                username: params.username,
+            }
+
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/users`, {headers, method: "POST", body: JSON.stringify(body)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_create_user_createUser>
+        }
+
+        public async deleteUser(params: RequestType<typeof api_auth_delete_user_deleteUser>): Promise<void> {
+            // Convert our params into the objects we need for the request
+            const headers = makeRecord<string, string>({
+                authorization: params.authorization,
+            })
+
+            await this.baseClient.callTypedAPI(`/users/${encodeURIComponent(params.id)}`, {headers, method: "DELETE", body: undefined})
+        }
+
+        public async listUsers(params: RequestType<typeof api_auth_list_users_listUsers>): Promise<ResponseType<typeof api_auth_list_users_listUsers>> {
+            // Convert our params into the objects we need for the request
+            const headers = makeRecord<string, string>({
+                authorization: params.authorization,
+            })
+
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/users`, {headers, method: "GET", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_list_users_listUsers>
         }
 
         public async login(params: RequestType<typeof api_auth_login_login>): Promise<ResponseType<typeof api_auth_login_login>> {
@@ -108,6 +157,25 @@ export namespace auth {
 
         public async logout(params: RequestType<typeof api_auth_logout_logout>): Promise<void> {
             await this.baseClient.callTypedAPI(`/auth/logout`, {method: "POST", body: JSON.stringify(params)})
+        }
+
+        public async updateUser(params: RequestType<typeof api_auth_update_user_updateUser>): Promise<ResponseType<typeof api_auth_update_user_updateUser>> {
+            // Convert our params into the objects we need for the request
+            const headers = makeRecord<string, string>({
+                authorization: params.authorization,
+            })
+
+            // Construct the body with only the fields which we want encoded within the body (excluding query string or header fields)
+            const body: Record<string, any> = {
+                groupId:  params.groupId,
+                password: params.password,
+                role:     params.role,
+                username: params.username,
+            }
+
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/users/${encodeURIComponent(params.id)}`, {headers, method: "PUT", body: JSON.stringify(body)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_auth_update_user_updateUser>
         }
 
         public async verifyToken(params: RequestType<typeof api_auth_verify_verifyToken>): Promise<ResponseType<typeof api_auth_verify_verifyToken>> {
@@ -125,6 +193,7 @@ import { create as api_dashboard_create_create } from "~backend/dashboard/create
 import { deleteDashboard as api_dashboard_delete_deleteDashboard } from "~backend/dashboard/delete";
 import { list as api_dashboard_list_list } from "~backend/dashboard/list";
 import { listActive as api_dashboard_list_active_listActive } from "~backend/dashboard/list_active";
+import { listByUser as api_dashboard_list_by_user_listByUser } from "~backend/dashboard/list_by_user";
 import { update as api_dashboard_update_update } from "~backend/dashboard/update";
 
 export namespace dashboard {
@@ -138,6 +207,7 @@ export namespace dashboard {
             this.deleteDashboard = this.deleteDashboard.bind(this)
             this.list = this.list.bind(this)
             this.listActive = this.listActive.bind(this)
+            this.listByUser = this.listByUser.bind(this)
             this.update = this.update.bind(this)
         }
 
@@ -181,6 +251,17 @@ export namespace dashboard {
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_dashboard_list_active_listActive>
         }
 
+        public async listByUser(params: RequestType<typeof api_dashboard_list_by_user_listByUser>): Promise<ResponseType<typeof api_dashboard_list_by_user_listByUser>> {
+            // Convert our params into the objects we need for the request
+            const headers = makeRecord<string, string>({
+                authorization: params.authorization,
+            })
+
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/dashboards/my-dashboards`, {headers, method: "GET", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_dashboard_list_by_user_listByUser>
+        }
+
         public async update(params: RequestType<typeof api_dashboard_update_update>): Promise<ResponseType<typeof api_dashboard_update_update>> {
             // Convert our params into the objects we need for the request
             const headers = makeRecord<string, string>({
@@ -199,6 +280,88 @@ export namespace dashboard {
             // Now make the actual call to the API
             const resp = await this.baseClient.callTypedAPI(`/dashboards/${encodeURIComponent(params.id)}`, {headers, method: "PUT", body: JSON.stringify(body)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_dashboard_update_update>
+        }
+    }
+}
+
+/**
+ * Import the endpoint handlers to derive the types for the client.
+ */
+import { create as api_group_create_create } from "~backend/group/create";
+import { deleteGroup as api_group_delete_deleteGroup } from "~backend/group/delete";
+import { get as api_group_get_get } from "~backend/group/get";
+import { list as api_group_list_list } from "~backend/group/list";
+import { update as api_group_update_update } from "~backend/group/update";
+
+export namespace group {
+
+    export class ServiceClient {
+        private baseClient: BaseClient
+
+        constructor(baseClient: BaseClient) {
+            this.baseClient = baseClient
+            this.create = this.create.bind(this)
+            this.deleteGroup = this.deleteGroup.bind(this)
+            this.get = this.get.bind(this)
+            this.list = this.list.bind(this)
+            this.update = this.update.bind(this)
+        }
+
+        public async create(params: RequestType<typeof api_group_create_create>): Promise<ResponseType<typeof api_group_create_create>> {
+            // Convert our params into the objects we need for the request
+            const headers = makeRecord<string, string>({
+                authorization: params.authorization,
+            })
+
+            // Construct the body with only the fields which we want encoded within the body (excluding query string or header fields)
+            const body: Record<string, any> = {
+                dashboardIds: params.dashboardIds,
+                description:  params.description,
+                name:         params.name,
+            }
+
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/groups`, {headers, method: "POST", body: JSON.stringify(body)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_group_create_create>
+        }
+
+        public async deleteGroup(params: RequestType<typeof api_group_delete_deleteGroup>): Promise<void> {
+            // Convert our params into the objects we need for the request
+            const headers = makeRecord<string, string>({
+                authorization: params.authorization,
+            })
+
+            await this.baseClient.callTypedAPI(`/groups/${encodeURIComponent(params.id)}`, {headers, method: "DELETE", body: undefined})
+        }
+
+        public async get(params: { id: number }): Promise<ResponseType<typeof api_group_get_get>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/groups/${encodeURIComponent(params.id)}`, {method: "GET", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_group_get_get>
+        }
+
+        public async list(): Promise<ResponseType<typeof api_group_list_list>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/groups`, {method: "GET", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_group_list_list>
+        }
+
+        public async update(params: RequestType<typeof api_group_update_update>): Promise<ResponseType<typeof api_group_update_update>> {
+            // Convert our params into the objects we need for the request
+            const headers = makeRecord<string, string>({
+                authorization: params.authorization,
+            })
+
+            // Construct the body with only the fields which we want encoded within the body (excluding query string or header fields)
+            const body: Record<string, any> = {
+                dashboardIds: params.dashboardIds,
+                description:  params.description,
+                name:         params.name,
+            }
+
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/groups/${encodeURIComponent(params.id)}`, {headers, method: "PUT", body: JSON.stringify(body)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_group_update_update>
         }
     }
 }
